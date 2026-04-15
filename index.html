@@ -153,7 +153,7 @@ function getOptions(t){
   if(inc(t,"cakacia doba")||inc(t,"cakania pacienta")) return {opts:["Do 10 min","10–20 min","20–40 min","Viac ako 40 min"],multi:false};
   if(inc(t,"lekar/lekarka")||inc(t,"ste lekar")||inc(t,"som lekar")||inc(t,"tu cest")||inc(t,"zdravotna sestra")&&inc(t,"lekar")) return {opts:["Som lekár","Som lekárka","Som zdravotná sestra"],multi:false};
   if(inc(t,"minut denne")&&inc(t,"telefonaty")||inc(t,"zaberaju telefonaty")) return {opts:["Do 30 min","30–60 min","1–2 hodiny","Viac ako 2 hodiny"],multi:false};
-  if(inc(t,"telefonato")&&(inc(t,"vybavi za den")||inc(t,"vybavy za den")||inc(t,"ambulancia")||inc(t,"denne"))) return {opts:["10–20","20–40","40–60","Viac ako 60"],multi:false};
+  if(inc(t,"telefonato")) return {opts:["10–20","20–40","40–60","Viac ako 60"],multi:false};
   return {opts:[],multi:false};
 }
 
