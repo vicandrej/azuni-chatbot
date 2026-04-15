@@ -66,7 +66,10 @@
     .cta-block{background:linear-gradient(135deg,rgba(47,184,184,0.10),rgba(43,45,126,0.06));border:1.5px solid rgba(47,184,184,0.30);border-radius:14px;padding:16px 18px;margin-left:42px;margin-top:4px;}
     .cta-block p{font-size:14px;color:#1E2060;line-height:1.65;margin:0 0 12px;font-weight:500;}
     .cta-btn{display:inline-block;background:linear-gradient(135deg,#5BC8C8,#1A8A8A);color:#fff;border-radius:10px;padding:10px 22px;font-size:14px;font-weight:600;text-decoration:none;}
-    .input-row{flex-shrink:0;padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));border-top:1px solid rgba(43,45,126,0.10);background:#fff;display:flex;gap:8px;}
+    .input-row{flex-shrink:0;padding:10px 12px 6px;padding-bottom:max(6px,env(safe-area-inset-bottom));border-top:1px solid rgba(43,45,126,0.10);background:#fff;display:flex;flex-direction:column;gap:6px;}
+    .input-inner{display:flex;gap:8px;}
+    .gdpr-note{font-size:11px;color:#7A7FAD;text-align:center;padding-bottom:4px;}
+    .gdpr-note a{color:#2FB8B8;text-decoration:none;}
     .input-row input{flex:1;min-width:0;padding:10px 14px;border-radius:10px;border:1px solid rgba(43,45,126,0.12);font-size:14px;color:#1E2060;outline:none;font-family:inherit;}
     .input-row input:focus{border-color:rgba(47,184,184,0.5);}
     .send-btn{background:linear-gradient(135deg,#5BC8C8,#1A8A8A);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:15px;cursor:pointer;flex-shrink:0;width:44px;}
@@ -100,8 +103,11 @@
     <div class="messages" id="messages"></div>
     <div id="quickOpts"></div>
     <div class="input-row">
-      <input id="userInput" type="text" placeholder="Napíšte odpoveď..." onkeydown="if(event.key==='Enter')sendMsg()"/>
-      <button class="send-btn" id="sendBtn" onclick="sendMsg()">→</button>
+      <div class="input-inner">
+        <input id="userInput" type="text" placeholder="Napíšte odpoveď..." onkeydown="if(event.key==='Enter')sendMsg()"/>
+        <button class="send-btn" id="sendBtn" onclick="sendMsg()">→</button>
+      </div>
+      <div class="gdpr-note">Odoslaním súhlasíte so <a href="https://www.zdravie.pro/ochrana-osobnych-udajov" target="_blank">spracovaním osobných údajov</a></div>
     </div>
   </div>
 </div>
@@ -192,7 +198,7 @@ function renderQuickOpts(opts, multi){
   if(!opts.length){ el.innerHTML = ''; return; }
   selected = [];
   var html = '<div class="quick-opts">';
-  if(multi) html += '<div class="hint">Mozete vybrat viac moznosti</div>';
+  if(multi) html += '<div class="hint">Môžete vybrať viac možností</div>';
   html += '<div class="opts-row" id="optsRow">';
   for(var i=0; i<opts.length; i++){
     html += '<button class="opt-btn" data-idx="' + i + '">' + opts[i] + '</button>';
@@ -218,7 +224,7 @@ function renderQuickOpts(opts, multi){
           var cb = document.getElementById('confirmBtn');
           if(cb){
             cb.style.display = selected.length > 0 ? 'block' : 'none';
-            cb.textContent = 'Potvrdit vyber (' + selected.length + ')';
+            cb.textContent = 'Potvrdiť výber (' + selected.length + ')';
             cb.onclick = function(){ if(selected.length) sendMsg(selected.join(', ')); };
           }
         } else {
