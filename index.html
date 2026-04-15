@@ -39,7 +39,7 @@
     .msg-avatar{width:34px;height:34px;border-radius:50%;background:rgba(47,184,184,0.10);border:1.5px solid rgba(47,184,184,0.30);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
     .bubble{max-width:82%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.65;white-space:pre-wrap;}
     .bubble.bot{background:#fff;color:#1E2060;border:1px solid rgba(43,45,126,0.10);border-bottom-left-radius:4px;box-shadow:0 1px 4px rgba(43,45,126,0.06);}
-    .bubble.user{background:#2B2D7E;color:#fff;border-bottom-right-radius:4px;}
+    .bubble.user{background:#E0F5F5;color:#1E2060;border-bottom-right-radius:4px;}
     .typing{display:flex;gap:5px;padding:4px 2px;}
     .dot{width:7px;height:7px;border-radius:50%;background:#2FB8B8;animation:bounce 1.2s ease-in-out infinite;}
     .dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
@@ -153,7 +153,7 @@ function getOptions(t){
   if(inc(t,"cakacia doba")||inc(t,"cakania pacienta")) return {opts:["Do 10 min","10–20 min","20–40 min","Viac ako 40 min"],multi:false};
   if(inc(t,"lekar/lekarka")||inc(t,"ste lekar")||inc(t,"som lekar")||inc(t,"tu cest")||inc(t,"zdravotna sestra")&&inc(t,"lekar")) return {opts:["Som lekár","Som lekárka","Som zdravotná sestra"],multi:false};
   if(inc(t,"minut denne")&&inc(t,"telefonaty")||inc(t,"zaberaju telefonaty")) return {opts:["Do 30 min","30–60 min","1–2 hodiny","Viac ako 2 hodiny"],multi:false};
-  if(inc(t,"telefonato")&&inc(t,"vybavi za den")||inc(t,"kolko telefonato")&&inc(t,"denne")||inc(t,"ambulancia")&&inc(t,"telefonato")) return {opts:["10–20","20–40","40–60","Viac ako 60"],multi:false};
+  if(inc(t,"telefonato")&&(inc(t,"vybavi za den")||inc(t,"vybavy za den")||inc(t,"ambulancia")||inc(t,"denne"))) return {opts:["10–20","20–40","40–60","Viac ako 60"],multi:false};
   return {opts:[],multi:false};
 }
 
