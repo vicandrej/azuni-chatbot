@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="sk">
 <head>
   <meta charset="UTF-8"/>
@@ -359,6 +358,43 @@ async function startChat(){
   const {opts,multi} = getOptions(reply);
   renderQuickOpts(opts,multi);
   if(isCallReasonQ(reply)) renderCallTable();
+  if(inc(reply,'skore efektivity')||inc(reply,'dosahuju priemerne 85')) renderCta();
+  document.getElementById('sendBtn').disabled=false;
+  document.getElementById('userInput').focus();
+}
+
+async function sendMsg(override){
+  const inp = document.getElementById('userInput');
+  const text = override || inp.value.trim();
+  if(!text) return;
+  if(!override) inp.value='';
+  document.getElementById('sendBtn').disabled=true;
+  document.getElementById('quickOpts').innerHTML='';
+  addMsg('user',text);
+  history.push({role:'user',content:text});
+  addTyping();
+  const reply = await callAPI(history);
+  removeTyping();
+  history.push({role:'assistant',content:reply});
+  addMsg('assistant',reply);
+  const {opts,multi} = getOptions(reply);
+  renderQuickOpts(opts,multi);
+  if(isCallReasonQ(reply)) renderCallTable();
+  if(inc(reply,'skore efektivity')||inc(reply,'dosahuju priemerne 85')) renderCta();
+  document.getElementById('sendBtn').disabled=false;
+  document.getElementById('userInput').focus();
+}').style.display='none';
+  document.getElementById('chatWrap').classList.add('active');
+  document.getElementById('sendBtn').disabled=true;
+  addTyping();
+  const reply = await callAPI([{role:'user',content:'Zacni rozhovor.'}]);
+  removeTyping();
+  history.push({role:'user',content:'Zacni rozhovor.'});
+  history.push({role:'assistant',content:reply});
+  addMsg('assistant',reply);
+  const {opts,multi} = getOptions(reply);
+  renderQuickOpts(opts,multi);
+  if(isCallReasonQ(reply)) renderCallTable();
   document.getElementById('sendBtn').disabled=false;
   document.getElementById('userInput').focus();
 }
@@ -385,6 +421,5 @@ async function sendMsg(override){
   document.getElementById('userInput').focus();
 }
 </script>
-
 </body>
 </html>
