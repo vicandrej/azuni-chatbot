@@ -153,7 +153,7 @@ function getOptions(t){
   if(inc(t,"cakacia doba")||inc(t,"cakania pacienta")) return {opts:["Do 10 min","10–20 min","20–40 min","Viac ako 40 min"],multi:false};
   if(inc(t,"lekar/lekarka")||inc(t,"ste lekar")||inc(t,"som lekar")||inc(t,"tu cest")||inc(t,"zdravotna sestra")&&inc(t,"lekar")) return {opts:["Som lekár","Som lekárka","Som zdravotná sestra"],multi:false};
   if(inc(t,"minut denne")&&inc(t,"telefonaty")||inc(t,"zaberaju telefonaty")) return {opts:["Do 30 min","30–60 min","1–2 hodiny","Viac ako 2 hodiny"],multi:false};
-  if(inc(t,"telefonato")) return {opts:["10–20","20–40","40–60","Viac ako 60"],multi:false};
+  if(inc(t,"telefon")) return {opts:["10–20","20–40","40–60","Viac ako 60"],multi:false};
   return {opts:[],multi:false};
 }
 
@@ -247,7 +247,8 @@ function renderQuickOpts(opts, multi){
   if(multi) html += `<div class="hint">Môžete vybrať viac možností</div>`;
   html += `<div class="opts-row" id="optsRow">`;
   opts.forEach((o,i) => {
-    html += `<button class="opt-btn" onclick="toggleOpt(this,'${o}',${multi})">${o}</button>`;
+    const safeVal = o.replace(/'/g, "\\'");
+    html += `<button class="opt-btn" onclick="toggleOpt(this,'${safeVal}',${multi})">${o}</button>`;
   });
   html += `</div>`;
   if(multi) html += `<button class="confirm-btn" id="confirmBtn" onclick="confirmMulti()" style="display:none">Potvrdiť výber →</button>`;
@@ -262,10 +263,18 @@ function renderQuickOpts(opts, multi){
 
 function toggleOpt(btn, val, multi){
   if(multi){
-    if(selected.includes(val)){ selected=selected.filter(x=>x!==val); btn.classList.remove('sel'); }
-    else { selected.push(val); btn.classList.add('sel'); }
+    if(selected.includes(val)){
+      selected = selected.filter(x=>x!==val);
+      btn.classList.remove('sel');
+    } else {
+      selected.push(val);
+      btn.classList.add('sel');
+    }
     const cb = document.getElementById('confirmBtn');
-    if(cb){ cb.style.display = selected.length>0?'block':'none'; cb.textContent=`Potvrdiť výber (${selected.length}) →`; }
+    if(cb){
+      cb.style.display = selected.length > 0 ? 'block' : 'none';
+      cb.textContent = `Potvrdiť výber (${selected.length}) →`;
+    }
   } else {
     sendMsg(val);
   }
