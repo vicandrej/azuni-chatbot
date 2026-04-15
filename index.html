@@ -6,8 +6,9 @@
   <title>Azuni — Diagnostika ambulancie | ZdraviePro</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'Inter',sans-serif;background:#F7F9FC;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem;}
-    .wrap{width:100%;max-width:560px;background:#fff;border-radius:16px;border:1px solid rgba(43,45,126,0.10);overflow:hidden;display:flex;flex-direction:column;height:92vh;max-height:700px;box-shadow:0 4px 32px rgba(43,45,126,0.08);}
+    body{font-family:'Inter',sans-serif;background:#F7F9FC;display:flex;align-items:stretch;justify-content:center;min-height:100vh;min-height:100dvh;padding:0;margin:0;}
+    .wrap{width:100%;max-width:560px;background:#fff;border-radius:0;border:none;overflow:hidden;display:flex;flex-direction:column;height:100vh;height:100dvh;box-shadow:0 4px 32px rgba(43,45,126,0.08);}
+    @media(min-width:600px){body{padding:1rem;align-items:center;}.wrap{border-radius:16px;border:1px solid rgba(43,45,126,0.10);height:92vh;max-height:700px;}}
     .intro{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem 2rem 3rem;gap:20px;flex:1;text-align:center;overflow-y:auto;}
     .intro-avatar{width:72px;height:72px;border-radius:50%;background:rgba(47,184,184,0.10);border:2px solid rgba(47,184,184,0.30);display:flex;align-items:center;justify-content:center;margin:0 auto;}
     .brand{font-size:24px;font-weight:700;color:#2B2D7E;}
@@ -119,8 +120,16 @@ const ZATAZ_OPTS = ["Telefonáty","Administratíva","Návaly pacientov","Konflik
 function norm(t){ return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
 function inc(t,s){ return norm(t).includes(norm(s)); }
 
-function isCallReasonQ(t){ return inc(t,"prira") || inc(t,"dovody telefonato") || inc(t,"pocet telefonato"); }
-function isKonfliktQ(t){ return inc(t,"konflikty") && (inc(t,"poradie") || inc(t,"cakar")); }
+function isCallReasonQ(t){ 
+  return inc(t,"prira") || inc(t,"dovody telefonato") || inc(t,"pocet telefonato") || 
+    inc(t,"podla jednotlivych") || inc(t,"jednotlivym dovod") || 
+    (inc(t,"dovod") && inc(t,"telefonato")) || 
+    (inc(t,"objednavka") && inc(t,"recept")) ||
+    (inc(t,"rozdelit") && inc(t,"telefonato")) ||
+    (inc(t,"jednotlive dovody")) ||
+    (inc(t,"kolko ich je") && inc(t,"dovod"));
+}
+function isKonfliktQ(t){ return inc(t,"konflikty") && inc(t,"poradie") && !inc(t,"zatazuje"); }
 function isMultiZatazQ(t){ return (inc(t,"ambulanciu") || inc(t,"ambulanci")) && inc(t,"zatazuje"); }
 function isOpenQ(t){
   return inc(t,"zameranie") || inc(t,"eliminovat") || inc(t,"e-mail") || inc(t,"email") ||
@@ -142,9 +151,9 @@ function getOptions(t){
   if(inc(t,"pacientov denne vybavite")||inc(t,"pacientov osobne")) return {opts:["Do 20","20–40","40–60","Viac ako 60"],multi:false};
   if(inc(t,"objednanych na termin")) return {opts:["Menej ako 30 %","30–60 %","60–80 %","Viac ako 80 %"],multi:false};
   if(inc(t,"cakacia doba")||inc(t,"cakania pacienta")) return {opts:["Do 10 min","10–20 min","20–40 min","Viac ako 40 min"],multi:false};
-  if(inc(t,"lekar")||inc(t,"sestr")||inc(t,"cest")) return {opts:["Som lekár","Som lekárka","Som zdravotná sestra"],multi:false};
-  if(inc(t,"telefonato")&&inc(t,"denne")||inc(t,"vybavy za den")) return {opts:["10–20","20–40","40–60","Viac ako 60"],multi:false};
-  if(inc(t,"minut denne")||inc(t,"zaberaju telefonaty")) return {opts:["Do 30 min","30–60 min","1–2 hodiny","Viac ako 2 hodiny"],multi:false};
+  if(inc(t,"lekar/lekarka")||inc(t,"ste lekar")||inc(t,"som lekar")||inc(t,"tu cest")||inc(t,"zdravotna sestra")&&inc(t,"lekar")) return {opts:["Som lekár","Som lekárka","Som zdravotná sestra"],multi:false};
+  if(inc(t,"minut denne")&&inc(t,"telefonaty")||inc(t,"zaberaju telefonaty")) return {opts:["Do 30 min","30–60 min","1–2 hodiny","Viac ako 2 hodiny"],multi:false};
+  if(inc(t,"telefonato")&&inc(t,"vybavi za den")||inc(t,"kolko telefonato")&&inc(t,"denne")||inc(t,"ambulancia")&&inc(t,"telefonato")) return {opts:["10–20","20–40","40–60","Viac ako 60"],multi:false};
   return {opts:[],multi:false};
 }
 
@@ -244,6 +253,11 @@ function renderQuickOpts(opts, multi){
   if(multi) html += `<button class="confirm-btn" id="confirmBtn" onclick="confirmMulti()" style="display:none">Potvrdiť výber →</button>`;
   html += `</div>`;
   el.innerHTML = html;
+  setTimeout(()=>{ 
+    const msgs=document.getElementById('messages'); 
+    const lastMsg = msgs.lastElementChild;
+    if(lastMsg) lastMsg.scrollIntoView({behavior:'smooth', block:'start'});
+  },100);
 }
 
 function toggleOpt(btn, val, multi){
