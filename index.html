@@ -153,7 +153,7 @@ function getOptions(t){
   return {opts:[],multi:false};
 }
 
-var history = [];
+var chatHistory = [];
 var selected = [];
 var tableSelections = {};
 var showCta = false;
@@ -310,8 +310,8 @@ async function startChat(){
   addTyping();
   var reply = await callAPI([{role:'user',content:'Zacni rozhovor.'}]);
   removeTyping();
-  history.push({role:'user',content:'Zacni rozhovor.'});
-  history.push({role:'assistant',content:reply});
+  chatHistory.push({role:'user',content:'Zacni rozhovor.'});
+  chatHistory.push({role:'assistant',content:reply});
   addMsg('assistant', reply);
   var result = getOptions(reply);
   renderQuickOpts(result.opts, result.multi);
@@ -329,11 +329,11 @@ async function sendMsg(override){
   document.getElementById('sendBtn').disabled = true;
   document.getElementById('quickOpts').innerHTML = '';
   addMsg('user', text);
-  history.push({role:'user',content:text});
+  chatHistory.push({role:'user',content:text});
   addTyping();
-  var reply = await callAPI(history);
+  var reply = await callAPI(chatHistory);
   removeTyping();
-  history.push({role:'assistant',content:reply});
+  chatHistory.push({role:'assistant',content:reply});
   addMsg('assistant', reply);
   var result = getOptions(reply);
   renderQuickOpts(result.opts, result.multi);
