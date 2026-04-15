@@ -1,7 +1,5 @@
 module.exports = async function handler(req, res) {
-res.setHeader(‘Content-Type’, ‘text/event-stream; charset=utf-8’);
-res.setHeader(‘Cache-Control’, ‘no-cache’);
-res.setHeader(‘Connection’, ‘keep-alive’);
+res.setHeader(‘Content-Type’, ‘application/json; charset=utf-8’);
 res.setHeader(‘Access-Control-Allow-Origin’, ‘*’);
 res.setHeader(‘Access-Control-Allow-Methods’, ‘POST, OPTIONS’);
 res.setHeader(‘Access-Control-Allow-Headers’, ‘Content-Type’);
@@ -69,39 +67,17 @@ headers: {
 body: JSON.stringify({
 model: ‘claude-haiku-4-5’,
 max_tokens: 250,
-stream: true,
 system,
 messages
 })
 });
 
 ```
-let fullText = '';
-const decoder = new TextDecoder();
-
-for await (const chunk of response.body) {
-  const text = decoder.decode(chunk);
-  const lines = text.split('\n');
-  for (const line of lines) {
-    if (line.startsWith('data: ')) {
-      const data = line.slice(6);
-      if (data === '[DONE]') continue;
-      try {
-        const parsed = JSON.parse(data);
-        if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-          fullText += parsed.delta.text;
-          res.write(`data: ${JSON.stringify({text: parsed.delta.text})}\n\n`);
-        }
-      } catch(e) {}
-    }
-  }
-}
-res.write('data: [DONE]\n\n');
-res.end();
+const data = await response.json();
+return res.status(200).json(data);
 ```
 
 } catch(e) {
-res.write(`data: ${JSON.stringify({error: e.message})}\n\n`);
-res.end();
+return res.status(500).json({ error: e.message });
 }
 };
