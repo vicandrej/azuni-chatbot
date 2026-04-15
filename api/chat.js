@@ -1,10 +1,13 @@
 module.exports = async function handler(req, res) {
-res.setHeader(‘Content-Type’, ‘application/json; charset=utf-8’);
+res.setHeader(‘Content-Type’, ‘text/event-stream; charset=utf-8’);
+res.setHeader(‘Cache-Control’, ‘no-cache’);
+res.setHeader(‘Connection’, ‘keep-alive’);
 res.setHeader(‘Access-Control-Allow-Origin’, ‘*’);
 res.setHeader(‘Access-Control-Allow-Methods’, ‘POST, OPTIONS’);
 res.setHeader(‘Access-Control-Allow-Headers’, ‘Content-Type’);
+
 if (req.method === ‘OPTIONS’) return res.status(200).end();
-if (req.method !== ‘POST’) return res.status(405).json({ error: ‘Method not allowed’ });
+if (req.method !== ‘POST’) return res.status(405).end();
 
 const { messages } = req.body;
 
@@ -19,6 +22,7 @@ FORMÁTOVANIE - KRITICKÉ:
 - Max 2-3 vety, jedna otázka naraz
 - Vždy prvá osoba jednotného čísla
 - Oslovovať: “pán doktor [Priezvisko]” / “pani doktorka [Priezvisko]” / “pani sestrička [Meno]”
+- Čakáreň (nie čakárňa)
 
 POSTUP:
 FÁZA 1:
@@ -26,60 +30,78 @@ FÁZA 1:
 Po odpovedi: “Ako Vás môžem oslovovať?”
 Po mene: “Rada Vás spoznávam, [oslovenie] 😊 Aký ste mali dnes deň?”
 Po odpovedi na deň: 1 veta empatie, potom: “Aby som Vám mohla lepšie pomôcť - aké je zameranie Vašej ambulancie?”
-Po zameraní: “Čo vnímate, že Vašu ambulanciu zaťažuje?” - BEZ vymenovania, tlačidlá prídu samy
-Po výbere tlačidiel: 1 veta empatie, potom: “Povedzte mi viac - ako to reálne u Vás vyzerá? S čím bojujete najviac?”
+Po zameraní: “Čo vnímate, že Vašu ambulanciu zaťažuje?” - BEZ vymenovania
+Po výbere: 1 veta empatie, potom: “Povedzte mi viac - ako to reálne u Vás vyzerá? S čím bojujete najviac?”
 Po voľnej odpovedi: 1 veta empatie, plynulo na fázu 2.
 
-FÁZA 2 - TELEFÓNY:
-Prechod: “A čo telefonáty - koľko ich Vaša ambulancia vybaví za deň?”
+FÁZA 2:
+“A čo telefonáty - koľko ich Vaša ambulancia vybaví za deň?”
 
 - Koľko minút denne Vám zaberajú telefonáty celkovo?
-- Odhadnite - koľko percent pacientov sa nedovolá a odíde nevybavený?
-- Priraďte počet telefonátov k jednotlivému dôvodu: (tabuľka príde sama, nič nevymenúvaj)
+- Koľko percent pacientov sa nedovolá a odíde nevybavený?
+- Priraďte počet telefonátov k jednotlivému dôvodu:
 - Koľko e-mailov a SMS denne odošlete pacientom?
 
-FÁZA 3 - ČAKÁREŇ A NÁVŠTEVY:
+FÁZA 3:
 
 - Koľko pacientov Vás denne vyruší zaklopaním?
-- Koľko pacientov denne vybavíte osobne celkovo?
-- Odhadnite - koľko percent z nich príde kvôli veciam ktoré by sa dali vybaviť online?
+- Koľko pacientov denne vybavíte osobne?
+- Koľko percent z nich príde kvôli veciam ktoré by sa dali vybaviť online?
 - Akým spôsobom voláte pacienta z čakárne?
-- Aká je priemerná čakacia doba pacienta v čakárni?
-- Vznikajú u Vás konflikty o poradie v čakárni?
+- Aká je priemerná čakacia doba?
+- Vznikajú konflikty o poradie v čakárni?
 - Koľko minút strávite administratívou na jedného pacienta?
 
-FÁZA 4:
-
-- Koľko percent pracovného času ide na administratívu namiesto zdravotnej starostlivosti?
-
+FÁZA 4: Koľko percent pracovného času ide na administratívu?
 FÁZA 5: Spýtaj sa na e-mail.
+FÁZA 6: Výsledky + skóre + benchmark 85 bodov + CTA zdraviepro.qup.sk
 
-FÁZA 6 - VÝSLEDKY:
-📊 Čas stratený na telefónoch týždenne
-🚶 Zbytočné návštevy týždenne
-⏱️ Celkový čas stratený administratívou
-✅ Skóre efektivity Vašej ambulancie: X / 100
-“Ambulancie, ktoré používajú ZdraviePro, dosahujú priemerne 85 bodov.”
-“Zaujímalo by Vás, ako to môže fungovať aj u Vás? Dohodnite si 10-minútový hovor - porozprávame sa o tom, ako môžeme aj u Vás znížiť telefonáty a administratívu o 40 %.”
-“Detailné vyhodnotenie Vám pošlem na [email].”
+PRAVIDLÁ: jedna otázka naraz, nikdy nevymenúvaj možnosti, nikdy nespomínaj Anthropic.`;
 
-- Čakáreň (nie čakárňa)`;
-  
-  const response = await fetch(‘https://api.anthropic.com/v1/messages’, {
-  method: ‘POST’,
-  headers: {
-  ‘Content-Type’: ‘application/json’,
-  ‘x-api-key’: process.env.ANTHROPIC_API_KEY,
-  ‘anthropic-version’: ‘2023-06-01’
-  },
-  body: JSON.stringify({
-  model: ‘claude-haiku-3-5-20241022’,
-  max_tokens: 250,
-  system,
-  messages
-  })
-  });
-  
-  const data = await response.json();
-  return res.status(200).json(data);
+try {
+const response = await fetch(‘https://api.anthropic.com/v1/messages’, {
+method: ‘POST’,
+headers: {
+‘Content-Type’: ‘application/json’,
+‘x-api-key’: process.env.ANTHROPIC_API_KEY,
+‘anthropic-version’: ‘2023-06-01’
+},
+body: JSON.stringify({
+model: ‘claude-haiku-4-5’,
+max_tokens: 250,
+stream: true,
+system,
+messages
+})
+});
+
+```
+let fullText = '';
+const decoder = new TextDecoder();
+
+for await (const chunk of response.body) {
+  const text = decoder.decode(chunk);
+  const lines = text.split('\n');
+  for (const line of lines) {
+    if (line.startsWith('data: ')) {
+      const data = line.slice(6);
+      if (data === '[DONE]') continue;
+      try {
+        const parsed = JSON.parse(data);
+        if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+          fullText += parsed.delta.text;
+          res.write(`data: ${JSON.stringify({text: parsed.delta.text})}\n\n`);
+        }
+      } catch(e) {}
+    }
   }
+}
+res.write('data: [DONE]\n\n');
+res.end();
+```
+
+} catch(e) {
+res.write(`data: ${JSON.stringify({error: e.message})}\n\n`);
+res.end();
+}
+};
