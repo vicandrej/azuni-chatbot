@@ -74,7 +74,7 @@ FÁZA 6 - VÝSLEDKY:
   },
   body: JSON.stringify({
   model: ‘claude-haiku-4-5’,
-  max_tokens: 400,
+  max_tokens: 250,
   system,
   messages
   })
