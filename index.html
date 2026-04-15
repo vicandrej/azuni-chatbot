@@ -117,7 +117,7 @@ document.getElementById('headerLogo').innerHTML = SVG_LOGO + '<span style="margi
 
 var RANGES = ["0-5","5-10","10-15","15-20","20-25","25-30","30-40","40+"];
 var CALL_REASONS = ["Recepty","Terminy","Poradie a cakanie","Vysledky","Administrativa","Zdravotny stav","Ine"];
-var ZATAZ_OPTS = ["Telefonaty","Administrativa","Navaly pacientov","Konflikty v cakarni","Rutinna komunikacia"];
+var ZATAZ_OPTS = ["Telefonáty","Administratíva","Návaly pacientov","Konflikty v čakárni","Rutinná komunikácia"];
 
 function norm(t){ return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
 function inc(t,s){ return norm(t).includes(norm(s)); }
@@ -139,17 +139,17 @@ function isOpenQ(t){
 
 function getOptions(t){
   if(isCallReasonQ(t) || isOpenQ(t)) return {opts:[],multi:false};
-  if(isKonfliktQ(t)) return {opts:["Viackrat za den","1x za den","3-4x za tyzden","1-2x za tyzden","Nevznikaju u nas"],multi:false};
+  if(isKonfliktQ(t)) return {opts:["Viackrát za deň","1x za deň","3–4x za týždeň","1–2x za týždeň","Nevznikajú u nás"],multi:false};
   if(isMultiZatazQ(t)) return {opts:ZATAZ_OPTS,multi:true};
-  if(inc(t,"akym sposobom") || inc(t,"volate pacienta")) return {opts:["Menom","Kto je dalsi?","Poradovym cislom","Cez vyvolavaci system"],multi:true};
-  if(inc(t,"percent pracovneho") || inc(t,"administrativu namiesto")) return {opts:["Do 20 %","20-40 %","40-60 %","Viac ako 60 %"],multi:false};
-  if(inc(t,"nedovola") || (inc(t,"percent pacientov") && !inc(t,"online"))) return {opts:["Takmer ziadne","10-20 %","20-40 %","Viac ako 40 %"],multi:false};
-  if(inc(t,"e-mailov") || inc(t,"sms denne")) return {opts:["Do 10","10-30","30-60","Viac ako 60"],multi:false};
-  if(inc(t,"pacientov denne vybavite") || inc(t,"pacientov osobne")) return {opts:["Do 20","20-40","40-60","Viac ako 60"],multi:false};
-  if(inc(t,"cakacia doba") || inc(t,"cakania pacienta")) return {opts:["Do 10 min","10-20 min","20-40 min","Viac ako 40 min"],multi:false};
-  if(inc(t,"tu cest") || inc(t,"lekar/lekarka") || inc(t,"ste lekar")) return {opts:["Som lekar","Som lekarka","Som zdravotna sestra"],multi:false};
-  if(inc(t,"minut denne") && inc(t,"telefon")) return {opts:["Do 30 min","30-60 min","1-2 hodiny","Viac ako 2 hodiny"],multi:false};
-  if(inc(t,"telefon")) return {opts:["10-20","20-40","40-60","Viac ako 60"],multi:false};
+  if(inc(t,"akym sposobom") || inc(t,"volate pacienta")) return {opts:["Menom","Kto je ďalší?","Poradovým číslom","Cez vyvolávací systém"],multi:true};
+  if(inc(t,"percent pracovneho") || inc(t,"administrativu namiesto")) return {opts:["Do 20 %","20–40 %","40–60 %","Viac ako 60 %"],multi:false};
+  if(inc(t,"nedovola") || (inc(t,"percent pacientov") && !inc(t,"online"))) return {opts:["Takmer žiadne","10–20 %","20–40 %","Viac ako 40 %"],multi:false};
+  if(inc(t,"e-mailov") || inc(t,"sms denne")) return {opts:["Do 10","10–30","30–60","Viac ako 60"],multi:false};
+  if(inc(t,"pacientov denne vybavite") || inc(t,"pacientov osobne")) return {opts:["Do 20","20–40","40–60","Viac ako 60"],multi:false};
+  if(inc(t,"cakacia doba") || inc(t,"cakania pacienta")) return {opts:["Do 10 min","10–20 min","20–40 min","Viac ako 40 min"],multi:false};
+  if(inc(t,"tu cest") || inc(t,"lekar/lekarka") || inc(t,"ste lekar")) return {opts:["Som lekár","Som lekárka","Som zdravotná sestra"],multi:false};
+  if(inc(t,"minut denne") && inc(t,"telefon")) return {opts:["Do 30 min","30–60 min","1–2 hodiny","Viac ako 2 hodiny"],multi:false};
+  if(inc(t,"telefon")) return {opts:["10–20","20–40","40–60","Viac ako 60"],multi:false};
   return {opts:[],multi:false};
 }
 
