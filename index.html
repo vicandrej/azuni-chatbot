@@ -133,7 +133,7 @@ function isCallReasonQ(t){
     (inc(t,"dovod") && inc(t,"telefonato")) || inc(t,"jednotlive dovody") ||
     (inc(t,"kolko ich je") && inc(t,"dovod"));
 }
-function isKonfliktQ(t){ return inc(t,"konflikty") && inc(t,"poradie") && !inc(t,"zatazuje"); }
+function isKonfliktQ(t){ return (inc(t,"konflikty") && inc(t,"poradie") || inc(t,"navaly pacientov") || inc(t,"navaly") && inc(t,"casto")) && !inc(t,"zatazuje"); }
 function isMultiZatazQ(t){ return (inc(t,"ambulanciu") || inc(t,"ambulanci")) && inc(t,"zatazuje"); }
 function isOpenQ(t){
   return inc(t,"zameranie") || inc(t,"e-mail") || inc(t,"email") ||
