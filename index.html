@@ -125,8 +125,9 @@ function setHeight(){
   var wrap = document.querySelector('.wrap');
   if(!wrap || window.innerWidth >= 600) return;
   if(vv){
-    var offsetBottom = window.innerHeight - (vv.offsetTop + vv.height);
-    wrap.style.bottom = offsetBottom + 'px';
+    wrap.style.top = vv.offsetTop + 'px';
+    wrap.style.height = vv.height + 'px';
+    wrap.style.bottom = 'auto';
     var msgs = document.getElementById('messages');
     if(msgs) setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; }, 50);
   }
@@ -134,6 +135,7 @@ function setHeight(){
 setHeight();
 if(window.visualViewport){
   window.visualViewport.addEventListener('resize', setHeight);
+  window.visualViewport.addEventListener('scroll', setHeight);
 } else {
   window.addEventListener('resize', setHeight);
 }
