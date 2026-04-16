@@ -175,7 +175,9 @@ function addMsg(role, text){
   if(role === 'assistant') div.innerHTML = svgAvatar() + '<div class="bubble bot">' + text + '</div>';
   else div.innerHTML = '<div class="bubble user">' + text + '</div>';
   msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
+  setTimeout(function(){
+    div.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 50);
 }
 
 function addTyping(){
