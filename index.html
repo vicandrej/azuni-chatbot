@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="sk">
 <head>
   <meta charset="UTF-8"/>
@@ -123,13 +124,15 @@ function setHeight(){
   var vv = window.visualViewport;
   var wrap = document.querySelector('.wrap');
   if(!wrap || window.innerWidth >= 600) return;
-  if(vv){
-    wrap.style.height = vv.height + 'px';
-  }
+  var h = vv ? vv.height : window.innerHeight;
+  var t = vv ? vv.offsetTop : 0;
+  wrap.style.height = h + 'px';
+  wrap.style.top = t + 'px';
 }
 setHeight();
 if(window.visualViewport){
   window.visualViewport.addEventListener('resize', setHeight);
+  window.visualViewport.addEventListener('scroll', setHeight);
 } else {
   window.addEventListener('resize', setHeight);
 }
@@ -374,5 +377,6 @@ async function sendMsg(override){
   document.getElementById('userInput').focus();
 }
 </script>
+
 </body>
 </html>
