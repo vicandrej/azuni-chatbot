@@ -313,16 +313,22 @@ async function startChat(){
   document.getElementById('intro').style.display = 'none';
   document.getElementById('chatWrap').classList.add('active');
   document.getElementById('sendBtn').disabled = true;
-  addTyping();
-  var reply = await callAPI([{role:'user',content:'Zacni rozhovor.'}]);
-  removeTyping();
+
+  var uvod = 'Dobrý deň 👋 Volám sa Azuni, som AI asistentka portálu ZdraviePro. Pomôžem Vám zistiť skutočnú efektivitu Vašej ambulancie. S kým mám tú česť — ste lekár, lekárka alebo zdravotná sestra?';
+
   chatHistory.push({role:'user',content:'Zacni rozhovor.'});
-  chatHistory.push({role:'assistant',content:reply});
-  addMsg('assistant', reply);
-  var result = getOptions(reply);
+  chatHistory.push({role:'assistant',content:uvod});
+  addMsg('assistant', uvod);
+
+  var result = getOptions(uvod);
   renderQuickOpts(result.opts, result.multi);
-  if(isCallReasonQ(reply)) renderCallTable();
-  if(inc(reply,'skore efektivity') || inc(reply,'dosahuju priemerne 85')) renderCta();
+
+  var isEmailQ2 = inc(uvod,'e-mailovu adresu') || inc(uvod,'emailovu adresu') || inc(uvod,'poslem vysledky') || (inc(uvod,'e-mail') && inc(uvod,'poslem'));
+  var gdpr2 = document.getElementById('gdprNote');
+  if(gdpr2) gdpr2.style.display = isEmailQ2 ? 'block' : 'none';
+  var inp3 = document.getElementById('userInput');
+  if(inp3) inp3.placeholder = isEmailQ2 ? 'Napíšte e-mail...' : 'Napíšte odpoveď...';
+
   document.getElementById('sendBtn').disabled = false;
   document.getElementById('userInput').focus();
 }
