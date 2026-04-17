@@ -427,8 +427,8 @@ async function startChat(){
   document.getElementById('sendBtn').disabled = true;
 
   var uvod = 'Dobrý deň 👋 Volám sa Azuni, som AI asistentka portálu ZdraviePro. Pomôžem Vám zistiť skutočnú efektivitu Vašej ambulancie. S kým mám tú česť — ste lekár, lekárka alebo zdravotná sestra?';
-  chatHistory.push({role:'user',content:'Zacni rozhovor.'});
-  chatHistory.push({role:'assistant',content:uvod});
+  chatHistory.push({role:'user', content:'Zacni rozhovor.'});
+  chatHistory.push({role:'assistant', content:uvod});
   addMsg('assistant', uvod);
 
   var result = getOptions(uvod);
