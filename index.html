@@ -194,8 +194,73 @@ function setInputMode(hasOpts){
   }
 }
 
-var chatHistory = [];
-var selected = [];
+// Hardcoded konverzacny flow pre prve kroky
+var FLOW_STEP = 0;
+var USER_ROLE = '';
+var USER_NAME = '';
+var AMBULANCIA = '';
+var ZATAZ_ANSWER = '';
+var ZATAZ_DETAIL = '';
+
+function getHardcodedReply(userMsg) {
+  var m = userMsg.toLowerCase().trim();
+  
+  if (FLOW_STEP === 0) {
+    // Krok 1: kto je
+    if (m.includes('lekar') && !m.includes('lekarka') && !m.includes('sestra')) USER_ROLE = 'lekar';
+    else if (m.includes('lekarka')) USER_ROLE = 'lekarka';
+    else USER_ROLE = 'sestra';
+    FLOW_STEP = 1;
+    return 'Ako Vás mám oslovovať?';
+  }
+  
+  if (FLOW_STEP === 1) {
+    // Krok 2: meno
+    USER_NAME = userMsg.trim();
+    var oslovenie = USER_ROLE === 'lekar' ? 'pán doktor ' + USER_NAME :
+                    USER_ROLE === 'lekarka' ? 'pani doktorka ' + USER_NAME :
+                    'pani sestrička ' + USER_NAME;
+    FLOW_STEP = 2;
+    return 'Rada Vás spoznávam, ' + oslovenie + ' 😊 Aký ste mali dnes deň?';
+  }
+  
+  if (FLOW_STEP === 2) {
+    // Krok 3: den
+    FLOW_STEP = 3;
+    var reakcia = ['Som rada, že sa darí 😊', 'To je fajn 😊', 'Dobre počuť 😊', 'Ráda som to počula 😊'];
+    var r = reakcia[Math.floor(Math.random() * reakcia.length)];
+    return r + ' Aké je zameranie Vašej ambulancie?';
+  }
+  
+  if (FLOW_STEP === 3) {
+    // Krok 4: zameranie
+    AMBULANCIA = userMsg.trim();
+    FLOW_STEP = 4;
+    return 'Čo vnímate, že Vašu ambulanciu zaťažuje?';
+  }
+  
+  if (FLOW_STEP === 4) {
+    // Krok 5: zataz - vybrane moznosti
+    ZATAZ_ANSWER = userMsg.trim();
+    FLOW_STEP = 5;
+    return 'Povedzte mi viac — ako to reálne u Vás vyzerá? S čím bojujete najviac?';
+  }
+  
+  if (FLOW_STEP === 5) {
+    // Krok 6: detail - prejdi na API
+    ZATAZ_DETAIL = userMsg.trim();
+    FLOW_STEP = 6;
+    return null; // null = pouzi API
+  }
+  
+  return null; // pouzi API
+}
+
+function getOslovenie() {
+  if (USER_ROLE === 'lekar') return 'pán doktor ' + USER_NAME;
+  if (USER_ROLE === 'lekarka') return 'pani doktorka ' + USER_NAME;
+  return 'pani sestrička ' + USER_NAME;
+}
 var tableSelections = {};
 var showCta = false;
 
@@ -384,17 +449,34 @@ async function sendMsg(override){
   document.getElementById('quickOpts').innerHTML = '';
   setInputMode(false);
   addMsg('user', text);
-  chatHistory.push({role:'user',content:text});
-  addTyping();
-  var reply = await callAPI(chatHistory);
-  removeTyping();
-  chatHistory.push({role:'assistant',content:reply});
+  chatHistory.push({role:'user', content:text});
+  
+  var hardcoded = getHardcodedReply(text);
+  var reply;
+  
+  if (hardcoded !== null) {
+    // Simuluj kratke pisanie
+    addTyping();
+    await new Promise(function(r){ setTimeout(r, 600); });
+    removeTyping();
+    reply = hardcoded;
+  } else {
+    // Pouzi API - pridaj kontext o lekari
+    addTyping();
+    var contextMsg = 'Lekár: ' + getOslovenie() + ', ambulancia: ' + AMBULANCIA + ', hlavné problémy: ' + ZATAZ_ANSWER + '. Detail: ' + ZATAZ_DETAIL;
+    var apiMessages = [{role:'user', content: contextMsg}];
+    chatHistory.forEach(function(m){ apiMessages.push(m); });
+    reply = await callAPI(apiMessages);
+    removeTyping();
+  }
+  
+  chatHistory.push({role:'assistant', content:reply});
   addMsg('assistant', reply);
   var result = getOptions(reply);
   var hasOpts = result.opts.length > 0 || isCallReasonQ(reply);
   renderQuickOpts(result.opts, result.multi);
   if(isCallReasonQ(reply)) renderCallTable();
-  if(inc(reply,'skore efektivity') || inc(reply,'dosahuju priemerne 85')) renderCta();
+  if(inc(reply,'skore efektivity') || inc(reply,'dosahuju priemerne 85') || inc(reply,'60,28')) renderCta();
   setInputMode(hasOpts);
   updateGdprAndPlaceholder(reply);
   document.getElementById('sendBtn').disabled = false;
