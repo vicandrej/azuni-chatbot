@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="sk">
 <head>
   <meta charset="UTF-8"/>
@@ -152,7 +151,12 @@ function inc(t,s){ return norm(t).includes(norm(s)); }
 function isCallReasonQ(t){
   return inc(t,"prira") || (inc(t,"dovod") && inc(t,"telefonato")) || inc(t,"jednotlive dovody");
 }
-function isKonfliktQ(t){ return (inc(t,"konflikty") && inc(t,"poradie") || inc(t,"navaly pacientov") || inc(t,"navaly") && inc(t,"casto")) && !inc(t,"zatazuje"); }
+function isKonfliktQ(t){ 
+  return !inc(t,"zatazuje") && (
+    (inc(t,"konflikty") && inc(t,"poradie")) || 
+    (inc(t,"naval") && (inc(t,"casto") || inc(t,"vznikaju") || inc(t,"pacient")))
+  );
+}
 function isMultiZatazQ(t){ return (inc(t,"ambulanciu") || inc(t,"ambulanci")) && inc(t,"zatazuje"); }
 function isOpenQ(t){
   return inc(t,"zameranie") || inc(t,"e-mail") || inc(t,"email") ||
@@ -332,7 +336,7 @@ function renderCta(){
   var msgs = document.getElementById('messages');
   var div = document.createElement('div');
   div.className = 'cta-block';
-  div.innerHTML = '<p>Zaujímalo by Vás, ako to môže fungovať aj u Vás v ambulancii? Dohodnite si 10-minútový hovor — porozprávame sa o tom, ako môžeme aj u Vás znížiť telefonáty a administratívu o 40 %.</p><a href="https://zdraviepro.qup.sk" target="_blank" class="cta-btn">Dohodnúť hovor</a>';
+  div.innerHTML = '<p>Zaujímalo by Vás, ako si môžete zjednodušiť prácu a znížiť telefonáty a administratívu až o 40 %?</p><a href="https://zdraviepro.qup.sk" target="_blank" class="cta-btn">Dohodnúť hovor</a>';
   msgs.appendChild(div);
   msgs.scrollTop = 99999;
 }
@@ -396,6 +400,5 @@ async function sendMsg(override){
   document.getElementById('sendBtn').disabled = false;
 }
 </script>
-
 </body>
 </html>
