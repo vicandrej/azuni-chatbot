@@ -1,10 +1,37 @@
+// api/chat.js - Vercel serverless function (CommonJS)
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  
   if (req.method === "OPTIONS") return res.status(200).end();
+  
+  if (req.method !== "POST") {
+    return res.status(200).json({ 
+      content: [{ text: "CHYBA: pouzi POST metodu" }] 
+    });
+  }
 
-  const { messages } = req.body;
+  // Diagnostika API kluca
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return res.status(200).json({ 
+      content: [{ text: "CHYBA: ANTHROPIC_API_KEY nie je nastaveny vo Vercel env vars. Chod do Vercel dashboard -> Settings -> Environment Variables a pridaj ho. Potom spust Redeploy." }] 
+    });
+  }
+
+  let messages;
+  try {
+    messages = req.body?.messages;
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(200).json({ 
+        content: [{ text: "CHYBA: messages musi byt pole. Dostal som: " + JSON.stringify(req.body).slice(0, 200) }] 
+      });
+    }
+  } catch (e) {
+    return res.status(200).json({ 
+      content: [{ text: "CHYBA pri parsovani body: " + e.message }] 
+    });
+  }
 
   const system = `Si Azuni, AI asistentka portalu ZdraviePro. Si zena. Pises vzdy v spisovnej slovencine.
 
@@ -14,7 +41,7 @@ ABSOLUTNE KRITICKE GRAMATICKE PRAVIDLA:
 - VZDY "aky" nie "ako" pri otazke o dni: "Aky ste mali dnes den?"
 - VZDY "pan doktor [meno]" - NIKDY "pane doktore"
 - NIKDY markdown hvezdicky
-- NIKDY ceske slova: nie "denno", nie "dlouha", nie "dobre" s hackom
+- NIKDY ceske slova: nie "denno", nie "dlouha"
 - Jedna otazka naraz
 - Kratke odpovede, max 2 vety + otazka
 
@@ -48,16 +75,41 @@ KONTEXT: Diagnostikujes efektivitu ambulancie. Uz prebehli uvitanie a zakladne o
         "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 300,
+        model: "claude-sonnet-4-5",
+        max_tokens: 500,
         system,
         messages
       })
     });
-    const data = await r.json();
-    if (data.error) return res.status(200).json({ content: [{ text: "CHYBA: " + data.error.type + " - " + data.error.message }] });
+
+    // Najprv ziskaj text - aby sme videli aj ne-JSON odpovede
+    const rawText = await r.text();
+    
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch (parseErr) {
+      // Anthropic vratila HTML/text namiesto JSON
+      return res.status(200).json({ 
+        content: [{ 
+          text: "CHYBA: Anthropic API vratila neplatnu odpoved (status " + r.status + "). Prvych 300 znakov: " + rawText.slice(0, 300) 
+        }] 
+      });
+    }
+
+    if (data.error) {
+      return res.status(200).json({ 
+        content: [{ 
+          text: "CHYBA: " + data.error.type + " - " + data.error.message 
+        }] 
+      });
+    }
+
     return res.status(200).json(data);
-  } catch(e) {
-    return res.status(200).json({ content: [{ text: "CHYBA: " + e.message }] });
+
+  } catch (e) {
+    return res.status(200).json({ 
+      content: [{ text: "CHYBA (handler catch): " + e.message }] 
+    });
   }
 };
