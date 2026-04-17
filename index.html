@@ -265,12 +265,27 @@ function svgAvatar(){
   return '<div class="msg-avatar"><img src="' + AZUNI_IMG + '" alt="Azuni"></div>';
 }
 
+function stripMarkdown(t){
+  if(!t) return t;
+  // Odstran **bold** a *italic*
+  t = t.replace(/\*\*(.+?)\*\*/g, '$1');
+  t = t.replace(/\*(.+?)\*/g, '$1');
+  // Odstran ## headers
+  t = t.replace(/^#+\s+/gm, '');
+  // Odstran bullet riadky "- " na zaciatku riadku
+  t = t.replace(/^[-•]\s+/gm, '');
+  // Odstran ___ podciarknutia
+  t = t.replace(/_{2,}/g, '');
+  return t.trim();
+}
+
 function addMsg(role, text){
   var msgs = document.getElementById('messages');
   var div = document.createElement('div');
   div.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
-  if(role === 'assistant') div.innerHTML = svgAvatar() + '<div class="bubble bot">' + text + '</div>';
-  else div.innerHTML = '<div class="bubble user">' + text + '</div>';
+  var cleanText = role === 'assistant' ? stripMarkdown(text) : text;
+  if(role === 'assistant') div.innerHTML = svgAvatar() + '<div class="bubble bot">' + cleanText + '</div>';
+  else div.innerHTML = '<div class="bubble user">' + cleanText + '</div>';
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
 }
@@ -473,11 +488,28 @@ async function sendMsg(override){
     
     chatHistory.push({role:'assistant', content:reply});
     addMsg('assistant', reply);
+    
+    // Detekcia zaverecnej obrazovky so skore
+    var isFinal = inc(reply,'skore efektivity') || inc(reply,'60,28') || 
+                  inc(reply,'dosahuju priemerne') || inc(reply,'znizit telefonaty az') ||
+                  (inc(reply,'vase skore') && inc(reply,'100')) ||
+                  inc(reply,'ambulancie ktore pouzivaju zdraviepro');
+    
+    if(isFinal){
+      renderCta();
+      document.getElementById('quickOpts').innerHTML = '';
+      setInputMode(false);
+      // Skry input row uplne
+      var inpRow = document.querySelector('.input-row');
+      if(inpRow) inpRow.style.display = 'none';
+      document.getElementById('sendBtn').disabled = false;
+      return;
+    }
+    
     var result = getOptions(reply);
     var hasOpts = result.opts.length > 0 || isCallReasonQ(reply);
     renderQuickOpts(result.opts, result.multi);
     if(isCallReasonQ(reply)) renderCallTable();
-    if(inc(reply,'skore efektivity') || inc(reply,'dosahuju priemerne 85') || inc(reply,'60,28')) renderCta();
     setInputMode(hasOpts);
     updateGdprAndPlaceholder(reply);
     document.getElementById('sendBtn').disabled = false;
