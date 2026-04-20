@@ -61,9 +61,12 @@
     .radio-dot.sel{border-color:#2FB8B8;background:#2FB8B8;}
     .table-confirm{margin-top:10px;background:#EEF0F8;color:#7A7FAD;border:none;border-radius:8px;padding:8px 20px;font-size:13px;font-weight:600;cursor:default;width:100%;}
     .table-confirm.active{background:linear-gradient(135deg,#5BC8C8,#1A8A8A);color:#fff;cursor:pointer;}
-    .cta-block{background:linear-gradient(135deg,rgba(47,184,184,0.10),rgba(43,45,126,0.06));border:1.5px solid rgba(47,184,184,0.30);border-radius:14px;padding:16px 18px;margin-left:42px;margin-top:4px;}
-    .cta-block p{font-size:14px;color:#1E2060;line-height:1.65;margin:0 0 12px;font-weight:500;}
-    .cta-btn{display:inline-block;background:linear-gradient(135deg,#5BC8C8,#1A8A8A);color:#fff;border-radius:10px;padding:10px 22px;font-size:14px;font-weight:600;text-decoration:none;}
+    .score-block{background:linear-gradient(135deg,rgba(47,184,184,0.10),rgba(43,45,126,0.06));border:1.5px solid rgba(47,184,184,0.30);border-radius:14px;padding:16px 18px;margin-left:42px;margin-top:4px;}
+    .score-block .score-big{font-size:28px;font-weight:800;color:#1A8A8A;margin-bottom:6px;}
+    .score-block .score-lbl{font-size:13px;color:#7A7FAD;margin-bottom:12px;}
+    .stats-list{display:flex;flex-direction:column;gap:8px;}
+    .stat-item{display:flex;align-items:center;gap:10px;font-size:13px;color:#1E2060;font-weight:500;}
+    .stat-item .ico{font-size:18px;}
     .input-row{flex-shrink:0;padding:10px 12px 6px;padding-bottom:max(6px,env(safe-area-inset-bottom));border-top:1px solid rgba(43,45,126,0.10);background:#fff;display:flex;flex-direction:column;gap:6px;}
     .input-inner{display:flex;gap:8px;}
     .gdpr-note{font-size:11px;color:#7A7FAD;text-align:center;padding-bottom:4px;}
@@ -101,7 +104,7 @@
     </div>
     <div class="messages" id="messages"></div>
     <div id="quickOpts"></div>
-    <div class="input-row">
+    <div class="input-row" id="inputRow">
       <div class="input-inner">
         <input id="userInput" type="text" placeholder="Napíšte odpoveď..." onkeydown="if(event.key==='Enter')sendMsg()"/>
         <button class="send-btn" id="sendBtn" onclick="sendMsg()">→</button>
@@ -114,17 +117,33 @@
 <script>
 var AZUNI_IMG = 'https://i.imgur.com/J3yxkyQ.jpeg';
 
-// Globalne premenne - MUSIA byt deklarovane pred pouzitim
+// Globalne premenne
 var chatHistory = [];
 var selected = [];
 var tableSelections = {};
-var showCta = false;
 var FLOW_STEP = 0;
 var USER_ROLE = '';
 var USER_NAME = '';
 var AMBULANCIA = '';
 var ZATAZ_ANSWER = '';
 var ZATAZ_DETAIL = '';
+
+// Zber dat pre emaily
+var LEAD_DATA = {
+  role: '',
+  name: '',
+  ambulancia: '',
+  zatazOptions: '',
+  zatazDetail: '',
+  email: '',
+  telefon: '',
+  preferovanyCas: '',
+  skore: 0,
+  conversation: []
+};
+
+// Flag - po emaile prepneme na hardcoded finalny flow
+var AFTER_EMAIL_STEP = 0; // 0=none, 1=po emaili (skore+stats+CTA), 2=po Ano (pyta telefon), 3=po telefone (pyta cas), 4=po case (zaver)
 
 // iOS keyboard fix
 function setHeight(){
@@ -177,11 +196,14 @@ function isOpenQ(t){
     inc(t,"online") || (inc(t,"minut") && inc(t,"pacienta"));
 }
 
+function isEmailAskQ(t){
+  return (inc(t,"emailovu adresu") || inc(t,"e-mailovu adresu") || inc(t,"poslat vysledky") || inc(t,"poslem vysledky")) && !inc(t,"telefonne");
+}
+
 function getOptions(t){
-  if(isCallReasonQ(t) || isOpenQ(t)) return {opts:[],multi:false};
+  if(isOpenQ(t)) return {opts:[],multi:false};
   if(isKonfliktQ(t)) return {opts:["Viackrát za deň","1x za deň","3–4x za týždeň","1–2x za týždeň","Nevznikajú u nás"],multi:false};
   if(isMultiZatazQ(t)) return {opts:ZATAZ_OPTS,multi:true};
-  if(inc(t,"akym sposobom") || inc(t,"volate pacienta")) return {opts:["Menom","Kto je ďalší?","Poradovým číslom","Cez vyvolávací systém"],multi:true};
   if(inc(t,"percent pracovneho") || inc(t,"administrativu namiesto")) return {opts:["Do 20 %","20–40 %","40–60 %","Viac ako 60 %"],multi:false};
   if(inc(t,"nedovola") || (inc(t,"percent pacientov") && !inc(t,"online"))) return {opts:["Takmer žiadne","10–20 %","20–40 %","Viac ako 40 %"],multi:false};
   if(inc(t,"e-mailov") || inc(t,"sms denne")) return {opts:["Do 10","10–30","30–60","Viac ako 60"],multi:false};
@@ -189,7 +211,7 @@ function getOptions(t){
   if(inc(t,"cakacia doba") || inc(t,"cakania pacienta")) return {opts:["Do 10 min","10–20 min","20–40 min","Viac ako 40 min"],multi:false};
   if(inc(t,"tu cest") || inc(t,"lekar/lekarka") || inc(t,"ste lekar")) return {opts:["Som lekár","Som lekárka","Som zdravotná sestra"],multi:false};
   if(inc(t,"minut denne") && inc(t,"telefon")) return {opts:["Do 30 min","30–60 min","1–2 hodiny","Viac ako 2 hodiny"],multi:false};
-  if(inc(t,"telefon")) return {opts:["10–20","20–40","40–60","Viac ako 60"],multi:false};
+  if(inc(t,"telefon") && !inc(t,"telefonne cislo")) return {opts:["10–20","20–40","40–60","Viac ako 60"],multi:false};
   return {opts:[],multi:false};
 }
 
@@ -206,6 +228,26 @@ function setInputMode(hasOpts){
   }
 }
 
+function stripMarkdown(t){
+  if(!t) return t;
+  t = t.replace(/\*\*(.+?)\*\*/g, '$1');
+  t = t.replace(/\*(.+?)\*/g, '$1');
+  t = t.replace(/^#+\s+/gm, '');
+  t = t.replace(/^[-•]\s+/gm, '');
+  t = t.replace(/_{2,}/g, '');
+  return t.trim();
+}
+
+function isValidEmail(e){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
+}
+
+function calculateScore(){
+  // Jednoduchy scoring - default 42, vieme to vylepsit neskor
+  // V buducnosti mozme vypocitat zo zbieranych odpovedi
+  return 42;
+}
+
 function getHardcodedReply(userMsg) {
   var m = norm(userMsg.trim());
   
@@ -214,12 +256,14 @@ function getHardcodedReply(userMsg) {
     else if (m.indexOf('lekarka') !== -1 || m.indexOf('doktorka') !== -1) USER_ROLE = 'lekarka';
     else if (m.indexOf('lekar') !== -1 || m.indexOf('doktor') !== -1) USER_ROLE = 'lekar';
     else USER_ROLE = 'lekar';
+    LEAD_DATA.role = USER_ROLE;
     FLOW_STEP = 1;
     return 'Ako Vás mám oslovovať?';
   }
   
   if (FLOW_STEP === 1) {
     USER_NAME = userMsg.trim();
+    LEAD_DATA.name = USER_NAME;
     var oslovenie = USER_ROLE === 'lekar' ? 'pán doktor ' + USER_NAME :
                     USER_ROLE === 'lekarka' ? 'pani doktorka ' + USER_NAME :
                     'pani sestrička ' + USER_NAME;
@@ -236,19 +280,15 @@ function getHardcodedReply(userMsg) {
   
   if (FLOW_STEP === 3) {
     AMBULANCIA = userMsg.trim();
+    LEAD_DATA.ambulancia = AMBULANCIA;
     FLOW_STEP = 4;
     return 'Čo vnímate, že Vašu ambulanciu zaťažuje?';
   }
   
   if (FLOW_STEP === 4) {
     ZATAZ_ANSWER = userMsg.trim();
+    LEAD_DATA.zatazOptions = ZATAZ_ANSWER;
     FLOW_STEP = 5;
-    return 'Povedzte mi viac — ako to reálne u Vás vyzerá? S čím bojujete najviac?';
-  }
-  
-  if (FLOW_STEP === 5) {
-    ZATAZ_DETAIL = userMsg.trim();
-    FLOW_STEP = 6;
     return null;
   }
   
@@ -263,20 +303,6 @@ function getOslovenie() {
 
 function svgAvatar(){
   return '<div class="msg-avatar"><img src="' + AZUNI_IMG + '" alt="Azuni"></div>';
-}
-
-function stripMarkdown(t){
-  if(!t) return t;
-  // Odstran **bold** a *italic*
-  t = t.replace(/\*\*(.+?)\*\*/g, '$1');
-  t = t.replace(/\*(.+?)\*/g, '$1');
-  // Odstran ## headers
-  t = t.replace(/^#+\s+/gm, '');
-  // Odstran bullet riadky "- " na zaciatku riadku
-  t = t.replace(/^[-•]\s+/gm, '');
-  // Odstran ___ podciarknutia
-  t = t.replace(/_{2,}/g, '');
-  return t.trim();
 }
 
 function addMsg(role, text){
@@ -306,11 +332,16 @@ function removeTyping(){
 }
 
 function updateGdprAndPlaceholder(reply){
-  var isEmailQ = inc(reply,'e-mailovu adresu') || inc(reply,'emailovu adresu') || inc(reply,'poslem vysledky') || (inc(reply,'e-mail') && inc(reply,'poslem'));
+  var isEmailQ = isEmailAskQ(reply);
+  var isPhoneQ = inc(reply,'telefonnom cisle') || inc(reply,'telefonne cislo');
   var gdpr = document.getElementById('gdprNote');
   if(gdpr) gdpr.style.display = isEmailQ ? 'block' : 'none';
   var inp = document.getElementById('userInput');
-  if(inp) inp.placeholder = isEmailQ ? 'Napíšte e-mail...' : 'Napíšte odpoveď...';
+  if(inp){
+    if(isEmailQ) inp.placeholder = 'Napíšte e-mail...';
+    else if(isPhoneQ) inp.placeholder = 'Napíšte telefónne číslo...';
+    else inp.placeholder = 'Napíšte odpoveď...';
+  }
 }
 
 function renderQuickOpts(opts, multi){
@@ -407,13 +438,20 @@ function confirmTable(){
   sendMsg('Dovody telefonatov: ' + parts.join(', '));
 }
 
-function renderCta(){
-  if(showCta) return;
-  showCta = true;
+function renderScoreBlock(skore){
   var msgs = document.getElementById('messages');
   var div = document.createElement('div');
-  div.className = 'cta-block';
-  div.innerHTML = '<p>Zaujímalo by Vás, ako si môžete zjednodušiť prácu a znížiť telefonáty a administratívu až o 40 %?</p><a href="https://zdraviepro.qup.sk" target="_blank" class="cta-btn">Dohodnúť hovor</a>';
+  div.className = 'score-block';
+  div.innerHTML = 
+    '<div class="score-big">' + skore + ' / 100</div>' +
+    '<div class="score-lbl">Vaše skóre efektivity</div>' +
+    '<div style="font-size:13px;color:#1E2060;margin-bottom:10px;font-weight:500;">Ambulancie, ktoré používajú systém ZdraviePro, dosahujú priemerne tieto výsledky:</div>' +
+    '<div class="stats-list">' +
+      '<div class="stat-item"><span class="ico">📞</span> Pokles telefonátov o 60,28 %</div>' +
+      '<div class="stat-item"><span class="ico">⏱️</span> Čas čakania pacientov skrátený o 57,12 %</div>' +
+      '<div class="stat-item"><span class="ico">📋</span> Čas venovaný administratíve klesá o 46,3 %</div>' +
+      '<div class="stat-item"><span class="ico">📅</span> Až o 75 % menej pacientov, ktorí sa nedostavia na termín</div>' +
+    '</div>';
   msgs.appendChild(div);
   msgs.scrollTop = 99999;
 }
@@ -433,6 +471,23 @@ async function callAPI(msgs){
   }
 }
 
+async function sendEmails(){
+  try {
+    LEAD_DATA.conversation = chatHistory.slice();
+    var res = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({leadData: LEAD_DATA})
+    });
+    var data = await res.json();
+    console.log('Email response:', data);
+    return data;
+  } catch(e) {
+    console.error('Email error:', e);
+    return {error: e.message};
+  }
+}
+
 async function startChat(){
   try {
     document.getElementById('intro').style.display = 'none';
@@ -445,7 +500,7 @@ async function startChat(){
     addMsg('assistant', uvod);
 
     var result = getOptions(uvod);
-    var hasOpts = result.opts.length > 0 || isCallReasonQ(uvod);
+    var hasOpts = result.opts.length > 0;
     renderQuickOpts(result.opts, result.multi);
     setInputMode(hasOpts);
     updateGdprAndPlaceholder(uvod);
@@ -453,6 +508,89 @@ async function startChat(){
   } catch(e) {
     alert('Chyba pri starte: ' + e.message);
     console.error(e);
+  }
+}
+
+// HARDCODED ZAVERECNY FLOW - po zadani emailu
+// AFTER_EMAIL_STEP:
+// 0 = este neprisiel email
+// 1 = po emaili zobrazime skore + stats + otazku "Zaujimalo by Vas..."
+// 2 = po "Ano" pytame telefon
+// 3 = po telefone pytame preferovany cas
+// 4 = po case zaverecna sprava + poslanie emailov
+
+async function handleAfterEmailStep(text){
+  // Krok 1: uzivatel prave zadal email - potvrd, ukaz skore, pytaj CTA otazku
+  if(AFTER_EMAIL_STEP === 1){
+    // text je odpoved na otazku "Zaujimalo by Vas..."
+    var ano = norm(text).indexOf('ano') !== -1 || norm(text).indexOf('zaujima') !== -1;
+    if(!ano){
+      // Nie - zaver
+      addTyping();
+      await new Promise(function(r){ setTimeout(r, 600); });
+      removeTyping();
+      var oslov = getOslovenie();
+      var zaver = 'Ďakujem za Váš čas, ' + oslov + '. Výsledky som Vám poslala na e-mail. Ak by ste si to premysleli, vždy nás môžete kontaktovať. Prajem pekný deň! 😊';
+      addMsg('assistant', zaver);
+      chatHistory.push({role:'assistant', content:zaver});
+      LEAD_DATA.preferovanyCas = 'Záujem odmietol';
+      LEAD_DATA.telefon = '';
+      LEAD_DATA.skore = calculateScore();
+      await sendEmails();
+      document.getElementById('quickOpts').innerHTML = '';
+      document.getElementById('inputRow').style.display = 'none';
+      AFTER_EMAIL_STEP = 99;
+      return;
+    }
+    // Ano - pytame telefon
+    addTyping();
+    await new Promise(function(r){ setTimeout(r, 600); });
+    removeTyping();
+    var q = 'Skvelé! Na akom telefónnom čísle Vás môžeme zastihnúť?';
+    addMsg('assistant', q);
+    chatHistory.push({role:'assistant', content:q});
+    AFTER_EMAIL_STEP = 2;
+    document.getElementById('quickOpts').innerHTML = '';
+    setInputMode(false);
+    var inp = document.getElementById('userInput');
+    if(inp) inp.placeholder = 'Napíšte telefónne číslo...';
+    return;
+  }
+  
+  // Krok 2: uzivatel zadal telefon
+  if(AFTER_EMAIL_STEP === 2){
+    LEAD_DATA.telefon = text.trim();
+    addTyping();
+    await new Promise(function(r){ setTimeout(r, 600); });
+    removeTyping();
+    var q = 'Ďakujem. Kedy je pre Vás preferovaný čas hovoru?';
+    addMsg('assistant', q);
+    chatHistory.push({role:'assistant', content:q});
+    AFTER_EMAIL_STEP = 3;
+    renderQuickOpts(['Ráno 8–10h', 'Dopoludnia 10–12h', 'Poobede 13–15h', 'Kedykoľvek'], false);
+    setInputMode(true);
+    return;
+  }
+  
+  // Krok 3: uzivatel vybral preferovany cas
+  if(AFTER_EMAIL_STEP === 3){
+    LEAD_DATA.preferovanyCas = text.trim();
+    LEAD_DATA.skore = calculateScore();
+    addTyping();
+    await new Promise(function(r){ setTimeout(r, 800); });
+    removeTyping();
+    var oslov = getOslovenie();
+    var zaver = 'Ďakujem za rozhovor, ' + oslov + '. Zavolá Vám náš kolega. Prajem pekný deň! 😊';
+    addMsg('assistant', zaver);
+    chatHistory.push({role:'assistant', content:zaver});
+    
+    // Poslat emaily
+    await sendEmails();
+    
+    document.getElementById('quickOpts').innerHTML = '';
+    document.getElementById('inputRow').style.display = 'none';
+    AFTER_EMAIL_STEP = 99;
+    return;
   }
 }
 
@@ -469,6 +607,19 @@ async function sendMsg(override){
     addMsg('user', text);
     chatHistory.push({role:'user', content:text});
     
+    // Ak sme uz v hardcoded zaverecnom flow
+    if(AFTER_EMAIL_STEP > 0 && AFTER_EMAIL_STEP < 99){
+      await handleAfterEmailStep(text);
+      document.getElementById('sendBtn').disabled = false;
+      return;
+    }
+    
+    // Ak sme skoncili (AFTER_EMAIL_STEP === 99), ignorujeme
+    if(AFTER_EMAIL_STEP === 99){
+      document.getElementById('sendBtn').disabled = false;
+      return;
+    }
+    
     var hardcoded = getHardcodedReply(text);
     var reply;
     
@@ -478,6 +629,41 @@ async function sendMsg(override){
       removeTyping();
       reply = hardcoded;
     } else {
+      // Kontrola ci uzivatel prave zadal email
+      if(isValidEmail(text)){
+        // Uzivatel zadal email - prepni na hardcoded zaverecny flow
+        LEAD_DATA.email = text.trim();
+        addTyping();
+        await new Promise(function(r){ setTimeout(r, 800); });
+        removeTyping();
+        
+        var oslov = getOslovenie();
+        var potvrdenie = 'Ďakujem, ' + oslov + '! Analýzu Vám odošlem na Váš e-mail hneď po dokončení rozhovoru.';
+        addMsg('assistant', potvrdenie);
+        chatHistory.push({role:'assistant', content:potvrdenie});
+        
+        // Zobraz skore blok
+        var skore = calculateScore();
+        LEAD_DATA.skore = skore;
+        renderScoreBlock(skore);
+        
+        // Po kratkom case otazka CTA
+        await new Promise(function(r){ setTimeout(r, 1200); });
+        addTyping();
+        await new Promise(function(r){ setTimeout(r, 600); });
+        removeTyping();
+        
+        var ctaQ = 'Zaujímalo by Vás, ako si môžete zjednodušiť prácu a znížiť telefonáty a administratívu až o 40 %?';
+        addMsg('assistant', ctaQ);
+        chatHistory.push({role:'assistant', content:ctaQ});
+        
+        AFTER_EMAIL_STEP = 1;
+        renderQuickOpts(['Áno, zaujíma ma', 'Nie, ďakujem'], false);
+        setInputMode(true);
+        document.getElementById('sendBtn').disabled = false;
+        return;
+      }
+      
       addTyping();
       var contextMsg = 'Lekar: ' + getOslovenie() + ', ambulancia: ' + AMBULANCIA + ', hlavne problemy: ' + ZATAZ_ANSWER + '. Detail: ' + ZATAZ_DETAIL;
       var apiMessages = [{role:'user', content: contextMsg}];
@@ -489,27 +675,9 @@ async function sendMsg(override){
     chatHistory.push({role:'assistant', content:reply});
     addMsg('assistant', reply);
     
-    // Detekcia zaverecnej obrazovky so skore
-    var isFinal = inc(reply,'skore efektivity') || inc(reply,'60,28') || 
-                  inc(reply,'dosahuju priemerne') || inc(reply,'znizit telefonaty az') ||
-                  (inc(reply,'vase skore') && inc(reply,'100')) ||
-                  inc(reply,'ambulancie ktore pouzivaju zdraviepro');
-    
-    if(isFinal){
-      renderCta();
-      document.getElementById('quickOpts').innerHTML = '';
-      setInputMode(false);
-      // Skry input row uplne
-      var inpRow = document.querySelector('.input-row');
-      if(inpRow) inpRow.style.display = 'none';
-      document.getElementById('sendBtn').disabled = false;
-      return;
-    }
-    
     var result = getOptions(reply);
-    var hasOpts = result.opts.length > 0 || isCallReasonQ(reply);
+    var hasOpts = result.opts.length > 0;
     renderQuickOpts(result.opts, result.multi);
-    if(isCallReasonQ(reply)) renderCallTable();
     setInputMode(hasOpts);
     updateGdprAndPlaceholder(reply);
     document.getElementById('sendBtn').disabled = false;
@@ -517,6 +685,7 @@ async function sendMsg(override){
     removeTyping();
     alert('Chyba: ' + e.message);
     console.error(e);
+    document.getElementById('sendBtn').disabled = false;
   }
 }
 </script>
