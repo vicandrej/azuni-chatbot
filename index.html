@@ -567,8 +567,10 @@ async function handleAfterEmailStep(text){
     addMsg('assistant', q);
     chatHistory.push({role:'assistant', content:q});
     AFTER_EMAIL_STEP = 3;
-    renderQuickOpts(['Ráno 8–10h', 'Dopoludnia 10–12h', 'Poobede 13–15h', 'Kedykoľvek'], false);
-    setInputMode(true);
+    document.getElementById('quickOpts').innerHTML = '';
+    setInputMode(false);
+    var inp = document.getElementById('userInput');
+    if(inp) inp.placeholder = 'Napíšte preferovaný čas...';
     return;
   }
   
