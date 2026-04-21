@@ -21,8 +21,10 @@ module.exports = async function handler(req, res) {
 
   const FROM_EMAIL = 'Azuni <azuni@zdravie.pro>';
   const INTERNAL_EMAIL = 'andrej@qup.sk';
-  const WEB_URL = 'https://zdraviepro.qup.sk';
+  const SYSTEM_URL = 'https://system.zdravie.pro';     // pre variant A (so zanechanym tel.)
+  const LANDING_URL = 'https://zdraviepro.qup.sk';      // pre variant B (bez telefonu)
   const MAIN_WEB = 'https://www.zdravie.pro';
+  const KIOSK_IMG = 'https://i.imgur.com/IBK9dxx.jpeg';
 
   let leadData;
   try {
@@ -98,7 +100,7 @@ module.exports = async function handler(req, res) {
   // ===== EMAIL 2: LEKAROVI =====
   const doctorSubject = `Výsledky Vašej diagnostiky — ZdraviePro`;
   
-  // Generuj personalizovanu analyzu podla zatazenia
+  // Personalizovana casť podla zatazenia (kratke reakcie do uvodneho odstavca)
   const zatazTextLower = (leadData.zatazOptions || '').toLowerCase();
   const hasTel = zatazTextLower.includes('telefon');
   const hasAdmin = zatazTextLower.includes('administr');
@@ -106,59 +108,28 @@ module.exports = async function handler(req, res) {
   const hasKonflikt = zatazTextLower.includes('konflikt');
   const hasRutina = zatazTextLower.includes('rutin');
 
-  // Top personalizovane oblasti - max 3 ktore si sam vybral
-  const personalBlocks = [];
-  if(hasTel) personalBlocks.push({
-    icon: '📞',
-    title: 'Telefonáty Vás už nebudú vyčerpávať',
-    text: 'Vaši pacienti sa objednajú online, dostanú automatické pripomienky a nemusia Vás zbytočne volať. Ušetrený čas môžete venovať tomu, na čom skutočne záleží — pacientom vo Vašej ambulancii.'
-  });
-  if(hasAdmin) personalBlocks.push({
-    icon: '📋',
-    title: 'Menej papierovania, viac medicíny',
-    text: 'Digitálne formuláre, automatický zápis do karty a integrácia so zdravotnými systémami Vám vrátia hodiny týždenne, ktoré ste predtým strávili administratívou.'
-  });
-  if(hasNaval) personalBlocks.push({
-    icon: '⏱️',
-    title: 'Pokojnejšia čakáreň bez návalov',
-    text: 'Online objednávací systém rozloží pacientov rovnomerne počas dňa. Žiadne ranné fronty, žiadny chaos — pacienti prídu vtedy, keď majú termín.'
-  });
-  if(hasKonflikt) personalBlocks.push({
-    icon: '🤝',
-    title: 'Pokoj v čakárni a jasné poradie',
-    text: 'Digitálny vyvolávací systém a transparentné online termíny odstránia zmätky okolo poradia. Vaša čakáreň bude pôsobiť profesionálne a upokojujúco.'
-  });
-  if(hasRutina) personalBlocks.push({
-    icon: '🔄',
-    title: 'Automatizácia rutiny ktorú robíte ručne',
-    text: 'Recepty, pripomienky, potvrdenia, výsledky — to všetko môže robiť systém automaticky za Vás. Pacienti dostanú čo potrebujú, Vy získate späť svoj čas.'
-  });
+  // Personalizovana vstupna veta - reflektuje co si on vybral
+  let personalIntro = '';
+  const painPoints = [];
+  if(hasTel) painPoints.push('telefonáty');
+  if(hasAdmin) painPoints.push('administratíva');
+  if(hasNaval) painPoints.push('návaly pacientov');
+  if(hasKonflikt) painPoints.push('konflikty v čakárni');
+  if(hasRutina) painPoints.push('rutinná komunikácia');
 
-  // Ak nevybral nic, daj univerzalne benefity
-  if(personalBlocks.length === 0) {
-    personalBlocks.push(
-      { icon: '📞', title: 'Menej telefonátov', text: 'Pacienti sa objednávajú online, dostávajú automatické pripomienky — telefóny zvonia výrazne menej.' },
-      { icon: '📋', title: 'Menej administratívy', text: 'Digitalizácia ručných činností Vám vráti hodiny týždenne.' },
-      { icon: '⏱️', title: 'Spokojnejší pacienti', text: 'Kratšie čakanie, lepšia organizácia, moderný prístup.' }
-    );
+  if(painPoints.length > 0) {
+    const painText = painPoints.length === 1 ? painPoints[0] :
+                     painPoints.length === 2 ? painPoints.join(' a ') :
+                     painPoints.slice(0,-1).join(', ') + ' a ' + painPoints.slice(-1);
+    personalIntro = `Z Vašich odpovedí vidím, že Vás najviac zaťažuje <strong>${painText}</strong>. A práve to sú oblasti, ktoré ZdraviePro rieši úplne.`;
+  } else {
+    personalIntro = 'ZdraviePro komplexne zastrešuje všetky oblasti, ktoré v ambulanciách stále zaberajú čas — od manažmentu čakárne až po online služby pre pacientov.';
   }
-
-  const top3 = personalBlocks.slice(0, 3);
-
-  const personalBlocksHtml = top3.map(b => `
-    <div style="background:#fff;border:1px solid #e0e5ef;border-radius:10px;padding:16px 18px;margin-bottom:12px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-        <span style="font-size:22px;">${b.icon}</span>
-        <strong style="color:#1A8A8A;font-size:15px;">${b.title}</strong>
-      </div>
-      <div style="color:#1E2060;font-size:14px;line-height:1.65;">${b.text}</div>
-    </div>
-  `).join('');
 
   // Zaverecna casť - lisi sa podla A/B variantu
   const closingBlock = hasPhone ? `
-    <div style="background:linear-gradient(135deg,rgba(47,184,184,0.15),rgba(43,45,126,0.08));border:1.5px solid #2FB8B8;border-radius:12px;padding:20px;margin:24px 0;">
-      <div style="color:#1A8A8A;font-size:16px;font-weight:700;margin-bottom:10px;">📞 Tešíme sa na náš rozhovor</div>
+    <div style="background:linear-gradient(135deg,rgba(47,184,184,0.15),rgba(43,45,126,0.08));border:1.5px solid #2FB8B8;border-radius:12px;padding:22px;margin:28px 0;">
+      <div style="color:#1A8A8A;font-size:17px;font-weight:700;margin-bottom:10px;">📞 Tešíme sa na náš rozhovor</div>
       <p style="color:#1E2060;font-size:14px;line-height:1.7;margin:0 0 10px 0;">
         Ďakujem, že ste si na diagnostiku našli čas. Ozveme sa Vám v dohodnutom čase <strong>${escapeHtml(leadData.preferovanyCas || 'podľa dohody')}</strong> na číslo <strong>${escapeHtml(leadData.telefon || '')}</strong>.
       </p>
@@ -168,20 +139,20 @@ module.exports = async function handler(req, res) {
     </div>
 
     <div style="text-align:center;margin:24px 0 12px 0;">
-      <p style="color:#7A7FAD;font-size:13px;margin:0 0 10px 0;">Ak sa chcete dovtedy dozvedieť viac o ZdraviePro:</p>
-      <a href="${WEB_URL}" style="display:inline-block;color:#1A8A8A;text-decoration:none;border:1.5px solid #2FB8B8;padding:10px 22px;border-radius:10px;font-weight:600;font-size:14px;">Pozrieť ZdraviePro →</a>
+      <p style="color:#7A7FAD;font-size:13px;margin:0 0 10px 0;">Ak sa chcete dovtedy pozrieť, ako systém vyzerá v praxi:</p>
+      <a href="${SYSTEM_URL}" style="display:inline-block;color:#1A8A8A;text-decoration:none;border:1.5px solid #2FB8B8;padding:11px 24px;border-radius:10px;font-weight:600;font-size:14px;">Pozrieť systém ZdraviePro →</a>
     </div>
   ` : `
-    <div style="background:linear-gradient(135deg,rgba(47,184,184,0.10),rgba(43,45,126,0.06));border:1.5px solid rgba(47,184,184,0.30);border-radius:12px;padding:20px;margin:24px 0;text-align:center;">
-      <p style="color:#1E2060;font-size:15px;line-height:1.7;margin:0 0 16px 0;font-weight:500;">
-        Ak by Vás zaujímalo ako to funguje v praxi a či by to malo zmysel aj pre Vašu ambulanciu, rada si s Vami nezáväzne zavolám. 15 minút, bez tlaku, bez záväzkov.
+    <div style="background:linear-gradient(135deg,rgba(47,184,184,0.10),rgba(43,45,126,0.06));border:1.5px solid rgba(47,184,184,0.30);border-radius:12px;padding:22px;margin:28px 0;text-align:center;">
+      <p style="color:#1E2060;font-size:15px;line-height:1.7;margin:0 0 18px 0;font-weight:500;">
+        Ak by Vás zaujímalo, ako by to fungovalo konkrétne u Vás, rada si s Vami nezáväzne zavolám. 15 minút, bez tlaku, bez záväzkov. 😊
       </p>
-      <a href="${WEB_URL}" style="display:inline-block;background:linear-gradient(135deg,#5BC8C8,#1A8A8A);color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:600;font-size:15px;">Dohodnúť nezáväzný hovor →</a>
+      <a href="${LANDING_URL}" style="display:inline-block;background:linear-gradient(135deg,#5BC8C8,#1A8A8A);color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:600;font-size:15px;">Dohodnúť nezáväzný hovor →</a>
     </div>
 
     <div style="text-align:center;margin:16px 0;">
-      <p style="color:#7A7FAD;font-size:13px;margin:0 0 8px 0;">Alebo si najprv preštudujte viac:</p>
-      <a href="${WEB_URL}" style="color:#1A8A8A;text-decoration:none;font-weight:500;font-size:14px;">www.zdravie.pro →</a>
+      <p style="color:#7A7FAD;font-size:13px;margin:0 0 8px 0;">Alebo si najprv pozrite systém:</p>
+      <a href="${SYSTEM_URL}" style="color:#1A8A8A;text-decoration:none;font-weight:500;font-size:14px;">system.zdravie.pro →</a>
     </div>
   `;
 
@@ -202,30 +173,84 @@ module.exports = async function handler(req, res) {
     <p style="color:#1E2060;font-size:16px;line-height:1.7;margin:0 0 16px 0;">Dobrý deň, ${escapeHtml(oslovenie)},</p>
     
     <p style="color:#1E2060;font-size:15px;line-height:1.7;margin:0 0 20px 0;">
-      ďakujem, že ste si našli čas na našu diagnostiku. Pozrela som sa na Vaše odpovede a chcela by som sa s Vami podeliť o to, čo z nich vyšlo.
+      ďakujem, že ste si našli čas na našu diagnostiku. Pozrela som sa na Vaše odpovede a rada by som sa s Vami podelila o to, čo z nich vyšlo. 😊
     </p>
 
     <!-- SKORE -->
     <div style="background:linear-gradient(135deg,rgba(47,184,184,0.10),rgba(43,45,126,0.06));border:2px solid #2FB8B8;border-radius:12px;padding:24px;text-align:center;margin:20px 0 24px 0;">
       <div style="color:#7A7FAD;font-size:13px;margin-bottom:8px;">Vaše skóre efektivity</div>
       <div style="color:#1A8A8A;font-size:48px;font-weight:800;line-height:1;">${leadData.skore || 42}<span style="font-size:22px;color:#7A7FAD;font-weight:400;"> / 100</span></div>
-      <div style="color:#7A7FAD;font-size:12px;margin-top:10px;font-style:italic;">Ambulancie s Google recenziou 4,5+ dosahujú priemerne 85+ bodov</div>
+      <div style="color:#7A7FAD;font-size:12px;margin-top:10px;font-style:italic;">Ambulancie, ktoré používajú systém ZdraviePro, dosahujú priemerne 85+ bodov</div>
     </div>
 
-    <!-- CONTEXT -->
-    <p style="color:#1E2060;font-size:15px;line-height:1.7;margin:0 0 12px 0;">
-      Z toho, čo ste zdieľali, vidím že najviac Vás zaťažuje <strong>${escapeHtml((leadData.zatazOptions || '').toLowerCase())}</strong>. A to je presne oblasť, kde Vám vieme veľmi konkrétne pomôcť.
+    <!-- PERSONALIZOVANY INTRO -->
+    <p style="color:#1E2060;font-size:15px;line-height:1.7;margin:0 0 24px 0;">
+      ${personalIntro}
     </p>
 
-    <p style="color:#1E2060;font-size:15px;line-height:1.7;margin:0 0 20px 0;">
-      ZdraviePro <strong>komplexne zastrešuje online služby aj manažment čakárne</strong>. Odbremeňuje Vás od činností, ktoré sa v ambulanciách stále robia ručne — pričom ich dnes už môže robiť systém automatizovane za Vás.
+    <!-- CO ZDRAVIE PRO PRINESIE - HLAVNA CAST -->
+    <h2 style="color:#2B2D7E;font-size:20px;margin:28px 0 8px 0;">Čo Vám ZdraviePro prinesie</h2>
+    <p style="color:#7A7FAD;font-size:13px;line-height:1.6;margin:0 0 20px 0;">
+      Komplexné riešenie pre ambulancie — manažment čakárne aj online služby v jednom.
     </p>
 
-    <!-- TOP 3 PERSONALIZOVANE -->
-    <h3 style="color:#2B2D7E;font-size:17px;margin:24px 0 14px 0;">Tri veci, ktoré by sa u Vás zmenili najvýraznejšie</h3>
-    ${personalBlocksHtml}
+    <!-- 3 BENEFITY V KARTICKACH -->
+    <div style="margin-bottom:24px;">
+      
+      <div style="background:#fff;border:1px solid #e0e5ef;border-radius:10px;padding:18px 20px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <span style="font-size:22px;">📞</span>
+          <strong style="color:#1A8A8A;font-size:16px;">Telefonáty Vás už nebudú vyčerpávať</strong>
+        </div>
+        <div style="color:#1E2060;font-size:14px;line-height:1.65;">Vaši pacienti sa objednajú online a o recept požiadajú jedným kliknutím — bez toho, aby sa s Vami museli telefonicky spájať. Telefón konečne stíchne a Vy získate späť svoj čas.</div>
+      </div>
 
-    <!-- AGREGATNE VYSLEDKY -->
+      <div style="background:#fff;border:1px solid #e0e5ef;border-radius:10px;padding:18px 20px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <span style="font-size:22px;">📋</span>
+          <strong style="color:#1A8A8A;font-size:16px;">Menej administratívy, viac medicíny</strong>
+        </div>
+        <div style="color:#1E2060;font-size:14px;line-height:1.65;">Informácie o pacientovi máte v počítači automaticky — sestra nemusí ani otvoriť dvere. Pripomienky termínov odchádzajú pacientom samé a rutinnú komunikáciu odošlete jedným kliknutím, nie ručným vypisovaním.</div>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e0e5ef;border-radius:10px;padding:18px 20px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <span style="font-size:22px;">🤝</span>
+          <strong style="color:#1A8A8A;font-size:16px;">Pokoj v čakárni a jasné poradie</strong>
+        </div>
+        <div style="color:#1E2060;font-size:14px;line-height:1.65;">Poradové lístky a vyvolávací systém zabezpečia pokojnú čakáreň bez konfliktov. Žiadne návaly — pacienti sú rovnomerne rozložení počas dňa podľa tempa Vašej ambulancie a čakacie doby sú výrazne kratšie.</div>
+      </div>
+
+    </div>
+
+    <!-- FOTKA KIOSKU -->
+    <div style="margin:28px 0;text-align:center;">
+      <img src="${KIOSK_IMG}" alt="Kiosk ZdraviePro v čakárni" style="max-width:100%;width:100%;border-radius:12px;border:1px solid #e0e5ef;display:block;"/>
+      <p style="color:#7A7FAD;font-size:12px;font-style:italic;margin:10px 0 0 0;">Kiosk ZdraviePro v čakárni — samoobslužná identifikácia a poradové lístky</p>
+    </div>
+
+    <!-- HLAVNY COPY - ODBREMENENIE OD RUTINY -->
+    <div style="background:linear-gradient(135deg,rgba(47,184,184,0.08),rgba(43,45,126,0.04));border-radius:12px;padding:22px 24px;margin:28px 0;">
+      <p style="color:#1E2060;font-size:15px;line-height:1.75;margin:0;">
+        <strong style="color:#1A8A8A;">ZdraviePro Vám zjednoduší prácu a odbremení Vás od rutinných úloh</strong>, ktoré dnes väčšina ambulancií robí ručne — zatiaľ čo ich už dnes za Vás môže robiť systém.
+      </p>
+    </div>
+
+    <!-- REFERENCIA -->
+    <div style="background:#fff;border:1px solid #e0e5ef;border-left:4px solid #2FB8B8;border-radius:10px;padding:22px 24px;margin:24px 0;">
+      <div style="color:#1E2060;font-size:15px;line-height:1.75;font-style:italic;margin-bottom:14px;">
+        "Pred ZdraviePro sme mali každé ráno telefón rozpálený. Dnes sa pacienti objednávajú sami online, čakáreň je pokojná a moji kolegovia konečne majú čas robiť to, na čo sú vyštudovaní — venovať sa pacientom. Neviem si už predstaviť ambulanciu bez tohto systému."
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#5BC8C8,#1A8A8A);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;">JK</div>
+        <div>
+          <div style="color:#1E2060;font-weight:600;font-size:14px;">MUDr. Ján Kováč</div>
+          <div style="color:#7A7FAD;font-size:12px;">Všeobecný lekár · Bratislava</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AGREGATNE VYSLEDKY - ako sekundarny dokaz -->
     <div style="background:#f7f9fc;border-radius:10px;padding:18px 20px;margin:24px 0;">
       <div style="color:#2B2D7E;font-size:14px;font-weight:700;margin-bottom:12px;">Priemerné výsledky ambulancií používajúcich ZdraviePro:</div>
       <table style="width:100%;border-collapse:collapse;">
@@ -253,7 +278,7 @@ module.exports = async function handler(req, res) {
 
   <!-- FOOTER -->
   <div style="text-align:center;color:#7A7FAD;font-size:11px;margin-top:16px;padding:0 16px;line-height:1.6;">
-    ZdraviePro · system.zdravie.pro<br/>
+    ZdraviePro · <a href="${SYSTEM_URL}" style="color:#7A7FAD;">system.zdravie.pro</a><br/>
     <a href="https://www.zdravie.pro/ochrana-osobnych-udajov" style="color:#7A7FAD;">Ochrana osobných údajov</a>
   </div>
 </body>
