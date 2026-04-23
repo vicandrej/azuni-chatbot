@@ -11,7 +11,7 @@
     body{font-family:'Inter',sans-serif;background:#F7F9FC;}
     .wrap{width:100%;max-width:560px;margin:0 auto;background:#fff;display:flex;flex-direction:column;overflow:hidden;position:fixed;top:0;left:0;right:0;bottom:0;}
     .intro{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem 2rem 3rem;gap:20px;flex:1;text-align:center;overflow-y:auto;touch-action:pan-y;}
-    .intro-avatar{width:72px;height:72px;border-radius:50%;overflow:hidden;margin:0 auto;border:2px solid rgba(47,184,184,0.30);}
+    .intro-avatar{width:126px;height:126px;border-radius:50%;overflow:hidden;margin:0 auto;border:2px solid rgba(47,184,184,0.30);}
     .intro-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;}
     .brand{font-size:24px;font-weight:700;color:#2B2D7E;}
     .pill{display:inline-block;background:#2FB8B8;color:#fff;border-radius:30px;padding:7px 20px;font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
@@ -84,13 +84,13 @@
     <div class="intro-avatar" id="introAvatar"></div>
     <div class="brand">ZdraviePro</div>
     <div class="pill">Vy liečite – my organizujeme</div>
-    <p class="intro-desc">Dobrý deň, ja som <strong>Azuni</strong>, AI asistentka portálu ZdraviePro. Dnes Vám pomôžem zistiť, kde Vaša ambulancia stráca čas a kapacitu — a čo s tým môžete urobiť.</p>
+    <p class="intro-desc">Dobrý deň, ja som <strong>Azuni</strong>, AI asistentka portálu ZdraviePro. Dnes Vám pomôžem vyhodnotiť, ako efektívne funguje Vaša ambulancia.</p>
     <div class="timer-badge">
       <span style="font-size:20px">⏱️</span>
-      <div><div class="t1">Len 5 minút</div><div class="t2">a dostanete konkrétne výsledky</div></div>
+      <div><div class="t1">Len 3 minúty</div><div class="t2">a dostanete konkrétne výsledky</div></div>
     </div>
     <div class="features-box">
-      <p>V tejto diagnostike sa pozrieme na veci, ktoré množstvo ambulancií robí stále ručne — pričom ich dnes už môže robiť za Vás automatizovaný systém.</p>
+      <p>Pozrieme sa na úlohy, ktoré ambulancie stále robia ručne — hoci ich už dnes vyrieši automaticky systém.</p>
     </div>
     <button class="btn-start" onclick="startChat()">Spustiť diagnostiku →</button>
     <div class="intro-foot">system.zdravie.pro</div>
@@ -273,7 +273,7 @@ function getHardcodedReply(userMsg) {
   
   if (FLOW_STEP === 2) {
     FLOW_STEP = 3;
-    var reakcia = ['Som rada, že sa darí 😊', 'To je fajn 😊', 'Dobre počuť 😊', 'Rada som to počula 😊'];
+    var reakcia = ['To rada počujem 😊', 'To je fajn 😊', 'Dobre počuť 😊', 'Teší ma to 😊'];
     var r = reakcia[Math.floor(Math.random() * reakcia.length)];
     return r + ' Aké je zameranie Vašej ambulancie?';
   }
