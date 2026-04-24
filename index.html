@@ -670,7 +670,7 @@ async function sendMsg(override){
         chatHistory.push({role:'assistant', content:ctaQ});
         
         AFTER_EMAIL_STEP = 1;
-        renderQuickOpts(['Áno, zaujíma ma', 'Nie, ďakujem'], false);
+        renderQuickOpts(['Nie, ďakujem', 'Áno, zaujíma ma'], false);
         setInputMode(true);
         document.getElementById('sendBtn').disabled = false;
         return;
