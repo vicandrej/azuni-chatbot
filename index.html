@@ -208,7 +208,7 @@ function getOptions(t){
   if(isOpenQ(t)) return {opts:[],multi:false};
   // NAJPRV specificke otazky (pred isMultiZatazQ ktora by ich mohla nesparvne chytit)
   if(inc(t,"cakacia doba") || inc(t,"cakania pacienta") || inc(t,"priemerna doba")) return {opts:["Do 10 min","10–20 min","20–40 min","Viac ako 40 min"],multi:false};
-  if(isNavalYesNoQ(t)) return {opts:["Áno","Nie"],multi:false};
+  if(isNavalYesNoQ(t)) return {opts:["Nie","Áno"],multi:false};
   if(isKonfliktQ(t)) return {opts:["Raz za deň","Viackrát za deň","Nevznikajú"],multi:false};
   if(inc(t,"e-mailov") || inc(t,"sms denne") || inc(t,"emailov a sms")) return {opts:["Do 10","10–30","30–60","Viac ako 60"],multi:false};
   if(inc(t,"pacientov denne vybavite") || inc(t,"pacientov osobne")) return {opts:["Do 20","20–40","40–60","Viac ako 60"],multi:false};
@@ -665,7 +665,7 @@ async function sendMsg(override){
         await new Promise(function(r){ setTimeout(r, 600); });
         removeTyping();
         
-        var ctaQ = 'Zaujímalo by Vás, ako si môžete zjednodušiť prácu a znížiť telefonáty a administratívu až o 40 %?';
+        var ctaQ = 'Zaujímalo by Vás, ako si aj Vy môžete zjednodušiť prácu v ambulancii a znížiť telefonáty a administratívu až o 40 %?';
         addMsg('assistant', ctaQ);
         chatHistory.push({role:'assistant', content:ctaQ});
         
