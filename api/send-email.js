@@ -215,7 +215,7 @@ module.exports = async function handler(req, res) {
   ` : `
     <div style="background:linear-gradient(135deg,rgba(47,184,184,0.10),rgba(43,45,126,0.06));border:1.5px solid rgba(47,184,184,0.30);border-radius:12px;padding:22px;margin:28px 0;text-align:center;">
       <p style="color:#1E2060;font-size:15px;line-height:1.7;margin:0 0 18px 0;font-weight:500;">
-        Ak by Vás zaujímalo, ako by to fungovalo konkrétne u Vás, rada si s Vami nezáväzne zavolám. 15 minút, bez tlaku, bez záväzkov. 😊
+        Ak by Vás zaujímalo, ako by to fungovalo konkrétne u Vás, môj kolega si s Vami rád nezáväzne zavolá. 15 minút, bez tlaku, bez záväzkov. 😊
       </p>
       <a href="${LANDING_URL}" style="display:inline-block;background:linear-gradient(135deg,#5BC8C8,#1A8A8A);color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:600;font-size:15px;">Dohodnúť nezáväzný hovor →</a>
     </div>
