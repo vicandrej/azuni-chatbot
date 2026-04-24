@@ -206,15 +206,17 @@ function isEmailAskQ(t){
 
 function getOptions(t){
   if(isOpenQ(t)) return {opts:[],multi:false};
+  // NAJPRV specificke otazky (pred isMultiZatazQ ktora by ich mohla nesparvne chytit)
+  if(inc(t,"cakacia doba") || inc(t,"cakania pacienta") || inc(t,"priemerna doba")) return {opts:["Do 10 min","10–20 min","20–40 min","Viac ako 40 min"],multi:false};
   if(isNavalYesNoQ(t)) return {opts:["Áno","Nie"],multi:false};
   if(isKonfliktQ(t)) return {opts:["Raz za deň","Viackrát za deň","Nevznikajú"],multi:false};
-  if(isMultiZatazQ(t)) return {opts:ZATAZ_OPTS,multi:true};
-  if(inc(t,"e-mailov") || inc(t,"sms denne")) return {opts:["Do 10","10–30","30–60","Viac ako 60"],multi:false};
+  if(inc(t,"e-mailov") || inc(t,"sms denne") || inc(t,"emailov a sms")) return {opts:["Do 10","10–30","30–60","Viac ako 60"],multi:false};
   if(inc(t,"pacientov denne vybavite") || inc(t,"pacientov osobne")) return {opts:["Do 20","20–40","40–60","Viac ako 60"],multi:false};
-  if(inc(t,"cakacia doba") || inc(t,"cakania pacienta")) return {opts:["Do 10 min","10–20 min","20–40 min","Viac ako 40 min"],multi:false};
   if(inc(t,"tu cest") || inc(t,"lekar/lekarka") || inc(t,"ste lekar")) return {opts:["Som lekár","Som lekárka","Som zdravotná sestra"],multi:false};
   if(inc(t,"minut denne") && inc(t,"telefon")) return {opts:["Do 30 min","30–60 min","1–2 hodiny","Viac ako 2 hodiny"],multi:false};
-  if(inc(t,"telefon") && !inc(t,"telefonne cislo")) return {opts:["10–20","20–40","40–60","Viac ako 60"],multi:false};
+  if(inc(t,"telefon") && !inc(t,"telefonne cislo") && !inc(t,"cakacia") && !inc(t,"cakania")) return {opts:["10–20","20–40","40–60","Viac ako 60"],multi:false};
+  // Multiselect pre zataz - az na konci (detekuje siroke sloveso "zatazuje")
+  if(isMultiZatazQ(t)) return {opts:ZATAZ_OPTS,multi:true};
   return {opts:[],multi:false};
 }
 
