@@ -100,7 +100,7 @@ module.exports = async function handler(req, res) {
   // ===== EMAIL 2: LEKAROVI =====
   const doctorSubject = `Výsledky Vašej diagnostiky — ZdraviePro`;
   
-  // Personalizovana casť podla zatazenia (kratke reakcie do uvodneho odstavca)
+  // Detekcia pain pointov
   const zatazTextLower = (leadData.zatazOptions || '').toLowerCase();
   const hasTel = zatazTextLower.includes('telefon');
   const hasAdmin = zatazTextLower.includes('administr');
@@ -108,8 +108,7 @@ module.exports = async function handler(req, res) {
   const hasKonflikt = zatazTextLower.includes('konflikt');
   const hasRutina = zatazTextLower.includes('rutin');
 
-  // Personalizovana vstupna veta - reflektuje co si on vybral
-  let personalIntro = '';
+  // Personalizovany intro text (s gramaticky spravnym slovesom)
   const painPoints = [];
   if(hasTel) painPoints.push('telefonáty');
   if(hasAdmin) painPoints.push('administratíva');
@@ -117,13 +116,12 @@ module.exports = async function handler(req, res) {
   if(hasKonflikt) painPoints.push('konflikty v čakárni');
   if(hasRutina) painPoints.push('rutinná komunikácia');
 
+  let personalIntro = '';
   if(painPoints.length > 0) {
     const painText = painPoints.length === 1 ? painPoints[0] :
                      painPoints.length === 2 ? painPoints.join(' a ') :
                      painPoints.slice(0,-1).join(', ') + ' a ' + painPoints.slice(-1);
     
-    // Gramatika: viac pain pointov → mnozne ("zatazuju")
-    // Jeden pain point → zalezi na tom aky je (administrativa/rutina = jednotne, ostatne mnozne)
     let verb = 'zaťažujú';
     if(painPoints.length === 1) {
       const single = painPoints[0];
@@ -137,7 +135,68 @@ module.exports = async function handler(req, res) {
     personalIntro = 'ZdraviePro komplexne zastrešuje všetky oblasti, ktoré v ambulanciách stále zaberajú čas — od manažmentu čakárne až po online služby pre pacientov.';
   }
 
-  // Zaverecna casť - lisi sa podla A/B variantu
+  // Personalizovane riesenia - zobrazi sa len to, co si lekar vybral
+  const solutionBlocks = [];
+  
+  if(hasTel) solutionBlocks.push({
+    icon: '📞',
+    title: 'Telefonáty Vás už nebudú vyčerpávať',
+    text: 'Vaši pacienti sa objednajú online a o recept požiadajú jedným kliknutím — bez toho, aby sa s Vami museli telefonicky spájať. Telefón konečne stíchne a Vy získate späť svoj čas.'
+  });
+  
+  if(hasAdmin) solutionBlocks.push({
+    icon: '📋',
+    title: 'Menej administratívy, viac medicíny',
+    text: 'Informácie o pacientovi máte v počítači automaticky — sestra nemusí ani otvoriť dvere. Pripomienky termínov odchádzajú pacientom samé a rutinnú komunikáciu odošlete jedným kliknutím, nie ručným vypisovaním.'
+  });
+  
+  if(hasNaval) solutionBlocks.push({
+    icon: '⏱️',
+    title: 'Žiadne návaly, pokojný deň',
+    text: 'Automatizovaný manažment pacientov rozloží návaly rovnomerne počas dňa, podľa tempa Vašej ambulancie. Ranné fronty a preplnená čakáreň sa stávajú minulosťou.'
+  });
+  
+  if(hasKonflikt) solutionBlocks.push({
+    icon: '🤝',
+    title: 'Pokoj v čakárni a jasné poradie',
+    text: 'Poradové lístky a vyvolávací systém zabezpečia pokojnú čakáreň bez konfliktov. Každý pacient jasne vidí svoje poradie a nemusí sa nikoho na nič pýtať — žiadne hádky, žiadny stres.'
+  });
+  
+  if(hasRutina) solutionBlocks.push({
+    icon: '🔄',
+    title: 'Rutinná komunikácia automaticky — pod Vašou kontrolou',
+    text: 'Informácie typu "Váš recept si môžete vyzdvihnúť v najbližšej lekárni", potvrdenia termínov alebo pripomienky návštev odchádzajú pacientom automaticky — pod Vašou kontrolou, bez ručného vypisovania.'
+  });
+
+  // Fallback - ak nevybral ziadny pain point, daj 3 univerzalne
+  if(solutionBlocks.length === 0) {
+    solutionBlocks.push(
+      { icon: '📞', title: 'Menej telefonátov', text: 'Pacienti sa objednávajú online a dostávajú automatické pripomienky — telefóny zvonia výrazne menej.' },
+      { icon: '📋', title: 'Menej administratívy', text: 'Digitalizácia ručných činností Vám vráti hodiny týždenne.' },
+      { icon: '⏱️', title: 'Spokojnejší pacienti', text: 'Kratšie čakanie, lepšia organizácia, moderný prístup.' }
+    );
+  }
+
+  const solutionBlocksHtml = solutionBlocks.map(b => `
+      <table role="presentation" style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e0e5ef;border-radius:12px;margin-bottom:12px;">
+        <tr>
+          <td style="padding:18px 20px;">
+            <table role="presentation" style="width:100%;border-collapse:collapse;">
+              <tr>
+                <td style="width:48px;vertical-align:top;padding-right:14px;">
+                  <div style="width:44px;height:44px;background:linear-gradient(135deg,rgba(91,200,200,0.18),rgba(26,138,138,0.12));border-radius:10px;text-align:center;line-height:44px;font-size:22px;">${b.icon}</div>
+                </td>
+                <td style="vertical-align:top;">
+                  <div style="color:#1A8A8A;font-size:15px;font-weight:700;line-height:1.35;margin-bottom:6px;">${b.title}</div>
+                  <div style="color:#1E2060;font-size:14px;line-height:1.65;">${b.text}</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>`).join('');
+
+  // Zaverecna cast - lisi sa podla A/B variantu
   const closingBlock = hasPhone ? `
     <div style="background:linear-gradient(135deg,rgba(47,184,184,0.15),rgba(43,45,126,0.08));border:1.5px solid #2FB8B8;border-radius:12px;padding:22px;margin:28px 0;">
       <div style="color:#1A8A8A;font-size:17px;font-weight:700;margin-bottom:10px;">📞 Tešíme sa na náš rozhovor</div>
