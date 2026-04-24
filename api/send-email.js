@@ -204,13 +204,13 @@ module.exports = async function handler(req, res) {
         Ďakujem, že ste si na diagnostiku našli čas. Ozveme sa Vám v preferovanom čase <strong>${escapeHtml(leadData.preferovanyCas || 'podľa dohody')}</strong> na číslo <strong>${escapeHtml(leadData.telefon || '')}</strong>.
       </p>
       <p style="color:#1E2060;font-size:14px;line-height:1.7;margin:0;">
-        Počas hovoru sa pokojne pozrieme na to, ktoré z týchto oblastí Vás trápia najviac a ako Vám vieme reálne pomôcť — bez tlaku, bez záväzkov.
+        Počas hovoru sa pozrieme na to, ako môže ZdraviePro fungovať konkrétne vo Vašej ambulancii a ako Vám vieme reálne pomôcť — bez tlaku, bez záväzkov.
       </p>
     </div>
 
     <div style="text-align:center;margin:24px 0 12px 0;">
-      <p style="color:#7A7FAD;font-size:13px;margin:0 0 10px 0;">Ak sa chcete dovtedy pozrieť, ako systém vyzerá v praxi:</p>
-      <a href="${SYSTEM_URL}" style="display:inline-block;color:#1A8A8A;text-decoration:none;border:1.5px solid #2FB8B8;padding:11px 24px;border-radius:10px;font-weight:600;font-size:14px;">Pozrieť systém ZdraviePro →</a>
+      <p style="color:#7A7FAD;font-size:13px;margin:0 0 10px 0;">Chcete sa dovtedy pozrieť na viac informácií o systéme ZdraviePro?</p>
+      <a href="${SYSTEM_URL}" style="display:inline-block;color:#1A8A8A;text-decoration:none;border:1.5px solid #2FB8B8;padding:11px 24px;border-radius:10px;font-weight:600;font-size:14px;">Zistiť viac o systéme ZdraviePro →</a>
     </div>
   ` : `
     <div style="background:linear-gradient(135deg,rgba(47,184,184,0.10),rgba(43,45,126,0.06));border:1.5px solid rgba(47,184,184,0.30);border-radius:12px;padding:22px;margin:28px 0;text-align:center;">
