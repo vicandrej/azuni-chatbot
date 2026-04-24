@@ -183,10 +183,13 @@ function inc(t,s){ return norm(t).includes(norm(s)); }
 function isCallReasonQ(t){
   return inc(t,"prira") || (inc(t,"dovod") && inc(t,"telefonato")) || inc(t,"jednotlive dovody");
 }
+function isNavalYesNoQ(t){ 
+  return inc(t,"mavate naval") || (inc(t,"naval") && !inc(t,"casto") && !inc(t,"ako casto"));
+}
 function isKonfliktQ(t){ 
   return !inc(t,"zatazuje") && (
     (inc(t,"konflikty") && inc(t,"poradie")) || 
-    (inc(t,"naval") && (inc(t,"casto") || inc(t,"vznikaju") || inc(t,"pacient")))
+    (inc(t,"naval") && inc(t,"casto"))
   );
 }
 function isMultiZatazQ(t){ return (inc(t,"ambulanciu") || inc(t,"ambulanci")) && inc(t,"zatazuje"); }
@@ -203,9 +206,9 @@ function isEmailAskQ(t){
 
 function getOptions(t){
   if(isOpenQ(t)) return {opts:[],multi:false};
-  if(isKonfliktQ(t)) return {opts:["Viackrát za deň","1x za deň","3–4x za týždeň","1–2x za týždeň","Nevznikajú u nás"],multi:false};
+  if(isNavalYesNoQ(t)) return {opts:["Áno","Nie"],multi:false};
+  if(isKonfliktQ(t)) return {opts:["Raz za deň","Viackrát za deň","Nevznikajú"],multi:false};
   if(isMultiZatazQ(t)) return {opts:ZATAZ_OPTS,multi:true};
-  if(inc(t,"percent pracovneho") || inc(t,"administrativu namiesto")) return {opts:["Do 20 %","20–40 %","40–60 %","Viac ako 60 %"],multi:false};
   if(inc(t,"e-mailov") || inc(t,"sms denne")) return {opts:["Do 10","10–30","30–60","Viac ako 60"],multi:false};
   if(inc(t,"pacientov denne vybavite") || inc(t,"pacientov osobne")) return {opts:["Do 20","20–40","40–60","Viac ako 60"],multi:false};
   if(inc(t,"cakacia doba") || inc(t,"cakania pacienta")) return {opts:["Do 10 min","10–20 min","20–40 min","Viac ako 40 min"],multi:false};
@@ -544,7 +547,7 @@ async function handleAfterEmailStep(text){
     addTyping();
     await new Promise(function(r){ setTimeout(r, 600); });
     removeTyping();
-    var q = 'Skvelé! Na akom telefónnom čísle Vás môžeme zastihnúť?';
+    var q = 'Skvelé! 😊 Na krátkom telefonáte sa s Vami spojí môj kolega a povie Vám konkrétne, ako by systém ZdraviePro mohol fungovať u Vás v ambulancii. Na akom telefónnom čísle Vás môžeme zastihnúť?';
     addMsg('assistant', q);
     chatHistory.push({role:'assistant', content:q});
     AFTER_EMAIL_STEP = 2;
