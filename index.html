@@ -140,6 +140,7 @@ var LEAD_DATA = {
   telefon: '',
   preferovanyCas: '',
   skore: 0,
+  scoreAnswers: {},  // odpovede zachytene pre vypocet skore
   conversation: []
 };
 
@@ -248,9 +249,110 @@ function isValidEmail(e){
 }
 
 function calculateScore(){
-  // Jednoduchy scoring - default 42, vieme to vylepsit neskor
-  // V buducnosti mozme vypocitat zo zbieranych odpovedi
-  return 42;
+  // Zacne sa od 100, odpocitavaju sa body podla odpovedi
+  var score = 100;
+  var ans = LEAD_DATA.scoreAnswers || {};
+  
+  // Telefonaty/den
+  if(ans.telefonaty){
+    var t = ans.telefonaty;
+    if(t.indexOf('10') === 0 || t.indexOf('do 10') !== -1) score -= 0;
+    else if(t.indexOf('20–40') !== -1 || t.indexOf('20-40') !== -1) score -= 8;
+    else if(t.indexOf('40–60') !== -1 || t.indexOf('40-60') !== -1) score -= 16;
+    else if(t.indexOf('Viac ako 60') !== -1 || t.indexOf('viac ako 60') !== -1) score -= 22;
+  }
+  
+  // Minuty na telefone
+  if(ans.minutyTelefon){
+    var m = ans.minutyTelefon;
+    if(m.indexOf('Do 30') !== -1) score -= 0;
+    else if(m.indexOf('30–60') !== -1 || m.indexOf('30-60') !== -1) score -= 5;
+    else if(m.indexOf('1–2') !== -1 || m.indexOf('1-2') !== -1) score -= 10;
+    else if(m.indexOf('Viac ako 2') !== -1) score -= 15;
+  }
+  
+  // Emaily/SMS denne
+  if(ans.emailySms){
+    var e = ans.emailySms;
+    if(e.indexOf('Do 10') !== -1) score -= 0;
+    else if(e.indexOf('10–30') !== -1 || e.indexOf('10-30') !== -1) score -= 3;
+    else if(e.indexOf('30–60') !== -1 || e.indexOf('30-60') !== -1) score -= 7;
+    else if(e.indexOf('Viac ako 60') !== -1) score -= 10;
+  }
+  
+  // Pacienti zaklopanim - text odpoved, pokus sa najst cislo
+  if(ans.zaklopanie){
+    var z = ans.zaklopanie;
+    var num = parseInt((z.match(/\d+/) || ['0'])[0]);
+    if(num > 0) score -= Math.min(num, 12);
+  }
+  
+  // Pacienti osobne
+  if(ans.osobne){
+    var o = ans.osobne;
+    if(o.indexOf('Do 20') !== -1) score -= 0;
+    else if(o.indexOf('20–40') !== -1 || o.indexOf('20-40') !== -1) score -= 3;
+    else if(o.indexOf('40–60') !== -1 || o.indexOf('40-60') !== -1) score -= 6;
+    else if(o.indexOf('Viac ako 60') !== -1) score -= 8;
+  }
+  
+  // Navaly
+  if(ans.navaly){
+    if(norm(ans.navaly) === 'ano') score -= 8;
+  }
+  
+  // Cakacia doba
+  if(ans.cakanie){
+    var c = ans.cakanie;
+    if(c.indexOf('Do 10') !== -1) score -= 0;
+    else if(c.indexOf('10–20') !== -1 || c.indexOf('10-20') !== -1) score -= 4;
+    else if(c.indexOf('20–40') !== -1 || c.indexOf('20-40') !== -1) score -= 10;
+    else if(c.indexOf('Viac ako 40') !== -1) score -= 15;
+  }
+  
+  // Konflikty
+  if(ans.konflikty){
+    var k = ans.konflikty;
+    if(k.indexOf('Nevznikaj') !== -1) score -= 0;
+    else if(k.indexOf('Raz za') !== -1) score -= 5;
+    else if(k.indexOf('Viackrát') !== -1 || k.indexOf('Viackrat') !== -1) score -= 10;
+  }
+  
+  // Minimum 20, maximum 100
+  if(score < 20) score = 20;
+  if(score > 100) score = 100;
+  return score;
+}
+
+// Zachytenie odpovedi pre score - rozpoznava ktoru otazku posledna Azuni polozila
+function captureScoreAnswer(lastAzuniMsg, userAnswer){
+  if(!lastAzuniMsg || !userAnswer) return;
+  var msg = lastAzuniMsg;
+  
+  if(inc(msg,"telefon") && !inc(msg,"telefonne cislo") && !inc(msg,"minut") && !inc(msg,"cakacia") && !inc(msg,"cakania")){
+    LEAD_DATA.scoreAnswers.telefonaty = userAnswer;
+  }
+  else if(inc(msg,"minut denne") && inc(msg,"telefon")){
+    LEAD_DATA.scoreAnswers.minutyTelefon = userAnswer;
+  }
+  else if(inc(msg,"e-mailov") || inc(msg,"sms denne") || inc(msg,"emailov a sms")){
+    LEAD_DATA.scoreAnswers.emailySms = userAnswer;
+  }
+  else if(inc(msg,"zaklopan")){
+    LEAD_DATA.scoreAnswers.zaklopanie = userAnswer;
+  }
+  else if(inc(msg,"pacientov denne vybavite") || inc(msg,"pacientov osobne")){
+    LEAD_DATA.scoreAnswers.osobne = userAnswer;
+  }
+  else if(isNavalYesNoQ(msg)){
+    LEAD_DATA.scoreAnswers.navaly = userAnswer;
+  }
+  else if(inc(msg,"cakacia doba") || inc(msg,"cakania pacienta") || inc(msg,"priemerna doba")){
+    LEAD_DATA.scoreAnswers.cakanie = userAnswer;
+  }
+  else if(isKonfliktQ(msg)){
+    LEAD_DATA.scoreAnswers.konflikty = userAnswer;
+  }
 }
 
 function getHardcodedReply(userMsg) {
@@ -263,7 +365,7 @@ function getHardcodedReply(userMsg) {
     else USER_ROLE = 'lekar';
     LEAD_DATA.role = USER_ROLE;
     FLOW_STEP = 1;
-    return 'Ako Vás mám oslovovať?';
+    return 'Aké je Vaše meno?';
   }
   
   if (FLOW_STEP === 1) {
@@ -298,6 +400,16 @@ function getHardcodedReply(userMsg) {
   }
   
   if (FLOW_STEP === 3) {
+    var normalized = norm(userMsg);
+    
+    // Detekcia ci sa lekar pyta "preco?" namiesto odpovede na zameranie
+    var precoQ = /\bpreco\b|\bco\s*ti\s*to\b|\bna\s*co\s*ti\b|\bnacho\b|\bna\s*coho\b|\bzac?co\b|\bz\s*akeho\s*dovodu\b|\bprosim\?/.test(normalized);
+    
+    if (precoQ) {
+      // Nepostupuj v flow - len odpovedaj a zopakuj otazku
+      return 'Pýtam sa preto, aby som Vám vedela pripraviť personalizovanú analýzu — riešenia pre pediatra a chirurga vyzerajú úplne inak 😊 Tak aké je zameranie Vašej ambulancie?';
+    }
+    
     AMBULANCIA = userMsg.trim();
     LEAD_DATA.ambulancia = AMBULANCIA;
     FLOW_STEP = 4;
@@ -544,21 +656,19 @@ async function handleAfterEmailStep(text){
     // text je odpoved na otazku "Zaujimalo by Vas..."
     var ano = norm(text).indexOf('ano') !== -1 || norm(text).indexOf('zaujima') !== -1;
     if(!ano){
-      // Nie - zaver
+      // Nie - skus ho jemne vratit, opytaj sa ci ma otazku
       addTyping();
-      await new Promise(function(r){ setTimeout(r, 600); });
+      await new Promise(function(r){ setTimeout(r, 700); });
       removeTyping();
       var oslov = getOslovenie();
-      var zaver = 'Ďakujem za Váš čas, ' + oslov + '. Výsledky som Vám poslala na e-mail. Ak by ste si to premysleli, vždy nás môžete kontaktovať. Prajem pekný deň! 😊';
-      addMsg('assistant', zaver);
-      chatHistory.push({role:'assistant', content:zaver});
-      LEAD_DATA.preferovanyCas = 'Záujem odmietol';
-      LEAD_DATA.telefon = '';
-      LEAD_DATA.skore = calculateScore();
-      await sendEmails();
+      var soft = 'Rozumiem, ' + oslov + ' 💛 Vôbec nič sa nedeje. Možno Vás však ešte niečo zaujíma o systéme ZdraviePro — máte nejakú otázku?';
+      addMsg('assistant', soft);
+      chatHistory.push({role:'assistant', content:soft});
+      AFTER_EMAIL_STEP = 1.5; // medzikrok - druha sanca
       document.getElementById('quickOpts').innerHTML = '';
-      document.getElementById('inputRow').style.display = 'none';
-      AFTER_EMAIL_STEP = 99;
+      setInputMode(false);
+      var inp2 = document.getElementById('userInput');
+      if(inp2) inp2.placeholder = 'Napíšte otázku alebo "nemám"...';
       return;
     }
     // Ano - pytame telefon
@@ -568,6 +678,48 @@ async function handleAfterEmailStep(text){
     var q = 'Skvelé! 😊 Na krátkom telefonáte sa s Vami spojí môj kolega a povie Vám konkrétne, ako by systém ZdraviePro mohol fungovať u Vás v ambulancii. Na akom telefónnom čísle Vás môžeme zastihnúť?';
     addMsg('assistant', q);
     chatHistory.push({role:'assistant', content:q});
+    AFTER_EMAIL_STEP = 2;
+    document.getElementById('quickOpts').innerHTML = '';
+    setInputMode(false);
+    var inp = document.getElementById('userInput');
+    if(inp) inp.placeholder = 'Napíšte telefónne číslo...';
+    return;
+  }
+  
+  // Krok 1.5: druha sanca - po "Nie" sa opytala ci ma otazku
+  if(AFTER_EMAIL_STEP === 1.5){
+    var nText = norm(text.trim());
+    
+    // Detekcia ze nema otazku (kratke negativne odpovede)
+    var nemaOtazku = /^(nie|nemam|ziadne|ziadnu|asi nie|asi ziadnu|nic|nicto|netreba|dakujem|netreba dakujem|asi nemam|nemam ziadnu|nemam otazku)/.test(nText) || nText.length < 4;
+    
+    if(nemaOtazku){
+      // Nema otazku - zaver bez hovoru, info pojde mailom
+      addTyping();
+      await new Promise(function(r){ setTimeout(r, 700); });
+      removeTyping();
+      var oslov2 = getOslovenie();
+      var zaverInfo = 'Dobre, ' + oslov2 + ' 😊 V e-maile, ktorý Vám teraz pošlem, nájdete všetky informácie o systéme ZdraviePro. Ak by ste sa neskôr predsa len chceli porozprávať, kolega Vám rád zavolá — kontakt nájdete v e-maile. Prajem Vám pekný deň 💛';
+      addMsg('assistant', zaverInfo);
+      chatHistory.push({role:'assistant', content:zaverInfo});
+      LEAD_DATA.preferovanyCas = 'Záujem odmietol';
+      LEAD_DATA.telefon = '';
+      await sendEmails();
+      document.getElementById('quickOpts').innerHTML = '';
+      document.getElementById('inputRow').style.display = 'none';
+      AFTER_EMAIL_STEP = 99;
+      return;
+    }
+    
+    // Ma otazku - ulozime ju a navrhneme hovor s kolegom
+    LEAD_DATA.otazka = text.trim();
+    addTyping();
+    await new Promise(function(r){ setTimeout(r, 800); });
+    removeTyping();
+    var oslov3 = getOslovenie();
+    var navrh = 'To je dobrá otázka, ' + oslov3 + ' 💛 Bude lepšie, ak sa Vám na ňu pokojne odpovie môj kolega — na 10 minútovom telefonáte Vám to vie vysvetliť oveľa lepšie ako ja. Na akom telefónnom čísle Vás môžeme zastihnúť?';
+    addMsg('assistant', navrh);
+    chatHistory.push({role:'assistant', content:navrh});
     AFTER_EMAIL_STEP = 2;
     document.getElementById('quickOpts').innerHTML = '';
     setInputMode(false);
@@ -596,7 +748,6 @@ async function handleAfterEmailStep(text){
   // Krok 3: uzivatel vybral preferovany cas
   if(AFTER_EMAIL_STEP === 3){
     LEAD_DATA.preferovanyCas = text.trim();
-    LEAD_DATA.skore = calculateScore();
     addTyping();
     await new Promise(function(r){ setTimeout(r, 800); });
     removeTyping();
@@ -628,6 +779,16 @@ async function sendMsg(override){
     addMsg('user', text);
     chatHistory.push({role:'user', content:text});
     
+    // Zachytenie odpovedi pre vypocet skore (najdi poslednu Azuni spravu)
+    var lastAzuniMsg = '';
+    for(var i = chatHistory.length - 2; i >= 0; i--){
+      if(chatHistory[i].role === 'assistant'){
+        lastAzuniMsg = chatHistory[i].content;
+        break;
+      }
+    }
+    captureScoreAnswer(lastAzuniMsg, text);
+    
     // Ak sme uz v hardcoded zaverecnom flow
     if(AFTER_EMAIL_STEP > 0 && AFTER_EMAIL_STEP < 99){
       await handleAfterEmailStep(text);
@@ -654,27 +815,24 @@ async function sendMsg(override){
       if(isValidEmail(text)){
         // Uzivatel zadal email - prepni na hardcoded zaverecny flow
         LEAD_DATA.email = text.trim();
+        LEAD_DATA.skore = calculateScore();
+        
         addTyping();
         await new Promise(function(r){ setTimeout(r, 800); });
         removeTyping();
         
         var oslov = getOslovenie();
-        var potvrdenie = 'Ďakujem, ' + oslov + '! Analýzu Vám odošlem na Váš e-mail hneď po dokončení rozhovoru.';
+        var potvrdenie = 'Ďakujem za odpovede, ' + oslov + ' 😊 Analýzu práve spracúvavam, hneď Vám ju pošlem do e-mailu.';
         addMsg('assistant', potvrdenie);
         chatHistory.push({role:'assistant', content:potvrdenie});
-        
-        // Zobraz skore blok
-        var skore = calculateScore();
-        LEAD_DATA.skore = skore;
-        renderScoreBlock(skore);
         
         // Po kratkom case otazka CTA
         await new Promise(function(r){ setTimeout(r, 1200); });
         addTyping();
-        await new Promise(function(r){ setTimeout(r, 600); });
+        await new Promise(function(r){ setTimeout(r, 700); });
         removeTyping();
         
-        var ctaQ = 'Zaujímalo by Vás, ako si aj Vy môžete zjednodušiť prácu v ambulancii a znížiť telefonáty a administratívu až o 40 %?';
+        var ctaQ = 'Zatiaľ sa Vás opýtam — zaujímalo by Vás, ako by ste si aj Vy mohli o 40 % zjednodušiť prácu vo Vašej ambulancii?';
         addMsg('assistant', ctaQ);
         chatHistory.push({role:'assistant', content:ctaQ});
         
