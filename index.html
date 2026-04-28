@@ -214,7 +214,9 @@ function getOptions(t){
   if(inc(t,"e-mailov") || inc(t,"sms denne") || inc(t,"emailov a sms")) return {opts:["Do 10","10–30","30–60","Viac ako 60"],multi:false};
   if(inc(t,"pacientov denne vybavite") || inc(t,"pacientov osobne")) return {opts:["Do 20","20–40","40–60","Viac ako 60"],multi:false};
   if(inc(t,"tu cest") || inc(t,"lekar/lekarka") || inc(t,"ste lekar")) return {opts:["Som lekár","Som lekárka","Som zdravotná sestra"],multi:false};
-  if(inc(t,"minut denne") && inc(t,"telefon")) return {opts:["Do 30 min","30–60 min","1–2 hodiny","Viac ako 2 hodiny"],multi:false};
+  // Specificka otazka o minutach na telefone - musi byt PRED generickym telefon pravidlom
+  if(inc(t,"minut") && (inc(t,"telefon") || inc(t,"zaber") || inc(t,"zabera") || inc(t,"strav"))) return {opts:["Do 30 min","30–60 min","1–2 hodiny","Viac ako 2 hodiny"],multi:false};
+  // Genericka otazka o pocte telefonatov
   if(inc(t,"telefon") && !inc(t,"telefonne cislo") && !inc(t,"cakacia") && !inc(t,"cakania")) return {opts:["10–20","20–40","40–60","Viac ako 60"],multi:false};
   // Multiselect pre zataz - az na konci (detekuje siroke sloveso "zatazuje")
   if(isMultiZatazQ(t)) return {opts:ZATAZ_OPTS,multi:true};
