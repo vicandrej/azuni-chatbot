@@ -383,7 +383,7 @@ function getHardcodedReply(userMsg) {
     var normalized = norm(userMsg);
     
     // Detekcia negativnych signalov
-    var negativny = /\b(hrozn|zly|zle|na\s*hovno|nahovno|stoji|stojim|stojite|stracam|nervy|unaven|vycerpan|narocn|tazk|pod\s*psa|peklo|bordel|chaos|stresuj|preceneny|hnev|nahne?van|smutn)/.test(normalized);
+    var negativny = /\b(hrozn|zly|zle|na\s*hovno|nahovno|napicu|do\s*pic|do\s*riti|nahaj|stoji|stojim|stojite|stracam|nervy|unaven|vycerpan|narocn|tazk|pod\s*psa|peklo|bordel|chaos|stresuj|preceneny|hnev|nahne?van|smutn|kokot|kokoti|nasrat|nasran|kurva|usran)/.test(normalized);
     
     // Detekcia spatnej otazky "a ty? / ako sa mas?"
     var vraclQ = /\ba\s*ty\b|\bco\s*ty\b|\bako\s*sa\s*mas\b|\bako\s*sa\s*mate\b|\bvy\s*\?|\bco\s*u\s*vas\b|\bako\s*je\s*to\s*u\s*vas\b/.test(normalized);
