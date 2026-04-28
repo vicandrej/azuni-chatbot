@@ -285,13 +285,13 @@ module.exports = async function handler(req, res) {
     <!-- REFERENCIA -->
     <div style="background:#fff;border:1px solid #e0e5ef;border-left:4px solid #2FB8B8;border-radius:10px;padding:22px 24px;margin:24px 0;">
       <div style="color:#1E2060;font-size:15px;line-height:1.75;font-style:italic;margin-bottom:14px;">
-        "Pred ZdraviePro sme mali každé ráno telefón rozpálený. Dnes sa pacienti objednávajú sami online, čakáreň je pokojná a moji kolegovia konečne majú čas robiť to, na čo sú vyštudovaní — venovať sa pacientom. Neviem si už predstaviť ambulanciu bez tohto systému."
+        "Používanie objednávacieho systému od ZdraviePro hodnotím veľmi pozitívne. Zavedenie tohto riešenia nám výrazne zjednodušilo organizáciu práce v ambulancii a zároveň zlepšilo komfort pre našich pacientov. Oceňujeme najmä prehľadné rozhranie, jednoduché ovládanie a spoľahlivosť systému. Vrelo odporúčam každému lekárovi v ambulantnom sektore, ktorý hľadá moderné a funkčné riešenie pre správu objednávok."
       </div>
       <div style="display:flex;align-items:center;gap:12px;">
-        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#5BC8C8,#1A8A8A);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;">JK</div>
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#5BC8C8,#1A8A8A);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;">LT</div>
         <div>
-          <div style="color:#1E2060;font-weight:600;font-size:14px;">MUDr. Ján Kováč</div>
-          <div style="color:#7A7FAD;font-size:12px;">Všeobecný lekár · Bratislava</div>
+          <div style="color:#1E2060;font-weight:600;font-size:14px;">MUDr. Lukáš Turček</div>
+          <div style="color:#7A7FAD;font-size:12px;">Všeobecný lekár · Nitra</div>
         </div>
       </div>
     </div>
