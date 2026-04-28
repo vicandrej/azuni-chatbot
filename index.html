@@ -189,7 +189,7 @@ function isNavalYesNoQ(t){
 }
 function isKonfliktQ(t){ 
   return !inc(t,"zatazuje") && (
-    (inc(t,"konflikty") && inc(t,"poradie")) || 
+    (inc(t,"konflikt") && (inc(t,"poradi") || inc(t,"poradie"))) || 
     (inc(t,"naval") && inc(t,"casto"))
   );
 }
