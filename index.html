@@ -5,6 +5,12 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
   <title>Azuni — Diagnostika ambulancie | ZdraviePro</title>
+
+  <!-- Meta Pixel - noscript fallback (bez JS nedokazeme consent, ale ponechavame standardny pattern) -->
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=1536231783754123&ev=PageView&noscript=1"
+  /></noscript>
+
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     html,body{margin:0;padding:0;width:100%;overflow:hidden;height:100%;touch-action:none;}
@@ -76,7 +82,40 @@
     .input-row input:focus{border-color:rgba(47,184,184,0.5);}
     .send-btn{background:linear-gradient(135deg,#5BC8C8,#1A8A8A);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:15px;cursor:pointer;flex-shrink:0;width:44px;}
     .send-btn:disabled{background:#EEF0F8;color:#7A7FAD;cursor:default;}
-    @media(min-width:600px){html,body{touch-action:auto;}.wrap{position:relative;height:92vh;max-height:700px;margin:1rem auto;border-radius:16px;border:1px solid rgba(43,45,126,0.10);box-shadow:0 4px 32px rgba(43,45,126,0.08);}}
+
+    /* ===== COOKIES LISTA ===== */
+    .cookie-overlay{position:fixed;left:0;right:0;bottom:0;z-index:10000;padding:12px;pointer-events:none;animation:cookieSlide .35s ease-out;}
+    @keyframes cookieSlide{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
+    .cookie-banner{max-width:560px;margin:0 auto;background:#fff;border:1px solid rgba(43,45,126,0.12);border-radius:14px;box-shadow:0 8px 40px rgba(43,45,126,0.18),0 2px 8px rgba(43,45,126,0.08);padding:18px 18px 16px;pointer-events:auto;}
+    .cookie-title{font-size:15px;font-weight:700;color:#1E2060;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+    .cookie-title .ico{font-size:18px;}
+    .cookie-text{font-size:13px;color:#4A4F7A;line-height:1.55;margin-bottom:14px;}
+    .cookie-text a{color:#2FB8B8;text-decoration:none;font-weight:500;}
+    .cookie-btns{display:flex;gap:8px;flex-wrap:wrap;}
+    .cookie-btn{flex:1;min-width:0;border:none;border-radius:10px;padding:11px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;}
+    .cookie-btn-primary{background:linear-gradient(135deg,#5BC8C8,#1A8A8A);color:#fff;}
+    .cookie-btn-primary:hover{filter:brightness(1.05);}
+    .cookie-btn-secondary{background:#fff;color:#2B2D7E;border:1.5px solid rgba(43,45,126,0.18);}
+    .cookie-btn-secondary:hover{background:#F7F9FC;border-color:#2FB8B8;}
+    .cookie-btn-tertiary{background:transparent;color:#7A7FAD;flex:0 0 auto;padding:11px 12px;font-size:12px;}
+    .cookie-btn-tertiary:hover{color:#2FB8B8;}
+    .cookie-settings{display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(43,45,126,0.10);}
+    .cookie-settings.active{display:block;}
+    .cookie-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid rgba(43,45,126,0.06);}
+    .cookie-row:last-of-type{border-bottom:none;}
+    .cookie-row-info{flex:1;}
+    .cookie-row-name{font-size:13px;font-weight:600;color:#1E2060;margin-bottom:2px;}
+    .cookie-row-desc{font-size:11.5px;color:#7A7FAD;line-height:1.45;}
+    .cookie-toggle{position:relative;width:38px;height:22px;background:#E0E3EE;border-radius:11px;cursor:pointer;flex-shrink:0;margin-top:2px;transition:background .2s;}
+    .cookie-toggle.on{background:#2FB8B8;}
+    .cookie-toggle.disabled{background:#C5C9DD;cursor:not-allowed;opacity:0.7;}
+    .cookie-toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,0.15);}
+    .cookie-toggle.on::after{transform:translateX(16px);}
+
+    @media(min-width:600px){
+      html,body{touch-action:auto;}
+      .wrap{position:relative;height:92vh;max-height:700px;margin:1rem auto;border-radius:16px;border:1px solid rgba(43,45,126,0.10);box-shadow:0 4px 32px rgba(43,45,126,0.08);}
+    }
   </style>
 </head>
 <body>
@@ -115,7 +154,150 @@
   </div>
 </div>
 
+<!-- ===== COOKIES LISTA ===== -->
+<div class="cookie-overlay" id="cookieOverlay" style="display:none">
+  <div class="cookie-banner">
+    <div class="cookie-title"><span class="ico">🍪</span> Cookies na našej stránke</div>
+    <div class="cookie-text">
+      Používame cookies, aby sme Vám zabezpečili čo najlepší zážitok a analyzovali návštevnosť stránky. Marketingové cookies nám pomáhajú merať účinnosť reklamy. Viac informácií nájdete v <a href="https://www.zdravie.pro/ochrana-osobnych-udajov" target="_blank">zásadách ochrany osobných údajov</a>.
+    </div>
+    <div class="cookie-btns">
+      <button class="cookie-btn cookie-btn-tertiary" onclick="toggleCookieSettings()">Nastavenia</button>
+      <button class="cookie-btn cookie-btn-secondary" onclick="rejectAllCookies()">Odmietnuť</button>
+      <button class="cookie-btn cookie-btn-primary" onclick="acceptAllCookies()">Prijať všetko</button>
+    </div>
+    <div class="cookie-settings" id="cookieSettings">
+      <div class="cookie-row">
+        <div class="cookie-row-info">
+          <div class="cookie-row-name">Nevyhnutné</div>
+          <div class="cookie-row-desc">Potrebné pre základné fungovanie stránky. Vždy aktívne.</div>
+        </div>
+        <div class="cookie-toggle on disabled" id="toggleNecessary"></div>
+      </div>
+      <div class="cookie-row">
+        <div class="cookie-row-info">
+          <div class="cookie-row-name">Marketingové</div>
+          <div class="cookie-row-desc">Meta Pixel — meranie účinnosti reklám a remarketing.</div>
+        </div>
+        <div class="cookie-toggle" id="toggleMarketing" onclick="toggleMarketingPref()"></div>
+      </div>
+      <div style="margin-top:12px;">
+        <button class="cookie-btn cookie-btn-primary" style="width:100%;" onclick="saveCookieSettings()">Uložiť nastavenia</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+// ============================================
+// COOKIES CONSENT + META PIXEL LOADER
+// ============================================
+var COOKIE_KEY = 'zdraviepro_cookie_consent_v1';
+var COOKIE_EXPIRY_DAYS = 365;
+var marketingPref = false; // pre nastavenia
+var pixelLoaded = false;
+
+function loadMetaPixel(){
+  if(pixelLoaded) return;
+  pixelLoaded = true;
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1536231783754123');
+  fbq('track', 'PageView');
+  console.log('[Cookies] Meta Pixel nacitany.');
+}
+
+function saveConsent(prefs){
+  var data = {
+    marketing: prefs.marketing,
+    timestamp: Date.now(),
+    expires: Date.now() + COOKIE_EXPIRY_DAYS * 24 * 60 * 60 * 1000
+  };
+  try {
+    localStorage.setItem(COOKIE_KEY, JSON.stringify(data));
+  } catch(e){
+    console.warn('[Cookies] localStorage nedostupny:', e);
+  }
+}
+
+function readConsent(){
+  try {
+    var raw = localStorage.getItem(COOKIE_KEY);
+    if(!raw) return null;
+    var data = JSON.parse(raw);
+    if(data.expires && data.expires < Date.now()){
+      localStorage.removeItem(COOKIE_KEY);
+      return null;
+    }
+    return data;
+  } catch(e){
+    return null;
+  }
+}
+
+function hideCookieBanner(){
+  var ov = document.getElementById('cookieOverlay');
+  if(ov) ov.style.display = 'none';
+}
+
+function showCookieBanner(){
+  var ov = document.getElementById('cookieOverlay');
+  if(ov) ov.style.display = 'block';
+}
+
+function acceptAllCookies(){
+  saveConsent({marketing: true});
+  hideCookieBanner();
+  loadMetaPixel();
+}
+
+function rejectAllCookies(){
+  saveConsent({marketing: false});
+  hideCookieBanner();
+}
+
+function toggleCookieSettings(){
+  var s = document.getElementById('cookieSettings');
+  if(s) s.classList.toggle('active');
+}
+
+function toggleMarketingPref(){
+  marketingPref = !marketingPref;
+  var t = document.getElementById('toggleMarketing');
+  if(t){
+    if(marketingPref) t.classList.add('on');
+    else t.classList.remove('on');
+  }
+}
+
+function saveCookieSettings(){
+  saveConsent({marketing: marketingPref});
+  hideCookieBanner();
+  if(marketingPref) loadMetaPixel();
+}
+
+// Pri nacitani stranky: rozhodni co s lavickou
+(function initCookies(){
+  var consent = readConsent();
+  if(consent === null){
+    // este nerozhodol - ukaz banner
+    showCookieBanner();
+  } else {
+    // uz rozhodol skor
+    hideCookieBanner();
+    if(consent.marketing) loadMetaPixel();
+  }
+})();
+
+// ============================================
+// AZUNI CHAT LOGIKA
+// ============================================
 var AZUNI_IMG = 'https://i.imgur.com/J3yxkyQ.jpeg';
 
 // Globalne premenne
@@ -140,12 +322,11 @@ var LEAD_DATA = {
   telefon: '',
   preferovanyCas: '',
   skore: 0,
-  scoreAnswers: {},  // odpovede zachytene pre vypocet skore
+  scoreAnswers: {},
   conversation: []
 };
 
-// Flag - po emaile prepneme na hardcoded finalny flow
-var AFTER_EMAIL_STEP = 0; // 0=none, 1=po emaili (skore+stats+CTA), 2=po Ano (pyta telefon), 3=po telefone (pyta cas), 4=po case (zaver)
+var AFTER_EMAIL_STEP = 0;
 
 // iOS keyboard fix
 function setHeight(){
@@ -207,18 +388,14 @@ function isEmailAskQ(t){
 
 function getOptions(t){
   if(isOpenQ(t)) return {opts:[],multi:false};
-  // NAJPRV specificke otazky (pred isMultiZatazQ ktora by ich mohla nesparvne chytit)
   if(inc(t,"cakacia doba") || inc(t,"cakania pacienta") || inc(t,"priemerna doba")) return {opts:["Do 10 min","10–20 min","20–40 min","Viac ako 40 min"],multi:false};
   if(isNavalYesNoQ(t)) return {opts:["Nie","Áno"],multi:false};
   if(isKonfliktQ(t)) return {opts:["Raz za deň","Viackrát za deň","Nevznikajú"],multi:false};
   if(inc(t,"e-mailov") || inc(t,"sms denne") || inc(t,"emailov a sms")) return {opts:["Do 10","10–30","30–60","Viac ako 60"],multi:false};
   if(inc(t,"pacientov denne vybavite") || inc(t,"pacientov osobne")) return {opts:["Do 20","20–40","40–60","Viac ako 60"],multi:false};
   if(inc(t,"tu cest") || inc(t,"lekar/lekarka") || inc(t,"ste lekar")) return {opts:["Som lekár","Som lekárka","Som zdravotná sestra"],multi:false};
-  // Specificka otazka o minutach na telefone - musi byt PRED generickym telefon pravidlom
   if(inc(t,"minut") && (inc(t,"telefon") || inc(t,"zaber") || inc(t,"zabera") || inc(t,"strav"))) return {opts:["Do 30 min","30–60 min","1–2 hodiny","Viac ako 2 hodiny"],multi:false};
-  // Genericka otazka o pocte telefonatov
   if(inc(t,"telefon") && !inc(t,"telefonne cislo") && !inc(t,"cakacia") && !inc(t,"cakania")) return {opts:["10–20","20–40","40–60","Viac ako 60"],multi:false};
-  // Multiselect pre zataz - az na konci (detekuje siroke sloveso "zatazuje")
   if(isMultiZatazQ(t)) return {opts:ZATAZ_OPTS,multi:true};
   return {opts:[],multi:false};
 }
@@ -251,11 +428,9 @@ function isValidEmail(e){
 }
 
 function calculateScore(){
-  // Zacne sa od 100, odpocitavaju sa body podla odpovedi
   var score = 100;
   var ans = LEAD_DATA.scoreAnswers || {};
   
-  // Telefonaty/den
   if(ans.telefonaty){
     var t = ans.telefonaty;
     if(t.indexOf('10') === 0 || t.indexOf('do 10') !== -1) score -= 0;
@@ -264,7 +439,6 @@ function calculateScore(){
     else if(t.indexOf('Viac ako 60') !== -1 || t.indexOf('viac ako 60') !== -1) score -= 22;
   }
   
-  // Minuty na telefone
   if(ans.minutyTelefon){
     var m = ans.minutyTelefon;
     if(m.indexOf('Do 30') !== -1) score -= 0;
@@ -273,7 +447,6 @@ function calculateScore(){
     else if(m.indexOf('Viac ako 2') !== -1) score -= 15;
   }
   
-  // Emaily/SMS denne
   if(ans.emailySms){
     var e = ans.emailySms;
     if(e.indexOf('Do 10') !== -1) score -= 0;
@@ -282,14 +455,12 @@ function calculateScore(){
     else if(e.indexOf('Viac ako 60') !== -1) score -= 10;
   }
   
-  // Pacienti zaklopanim - text odpoved, pokus sa najst cislo
   if(ans.zaklopanie){
     var z = ans.zaklopanie;
     var num = parseInt((z.match(/\d+/) || ['0'])[0]);
     if(num > 0) score -= Math.min(num, 12);
   }
   
-  // Pacienti osobne
   if(ans.osobne){
     var o = ans.osobne;
     if(o.indexOf('Do 20') !== -1) score -= 0;
@@ -298,12 +469,10 @@ function calculateScore(){
     else if(o.indexOf('Viac ako 60') !== -1) score -= 8;
   }
   
-  // Navaly
   if(ans.navaly){
     if(norm(ans.navaly) === 'ano') score -= 8;
   }
   
-  // Cakacia doba
   if(ans.cakanie){
     var c = ans.cakanie;
     if(c.indexOf('Do 10') !== -1) score -= 0;
@@ -312,7 +481,6 @@ function calculateScore(){
     else if(c.indexOf('Viac ako 40') !== -1) score -= 15;
   }
   
-  // Konflikty
   if(ans.konflikty){
     var k = ans.konflikty;
     if(k.indexOf('Nevznikaj') !== -1) score -= 0;
@@ -320,13 +488,11 @@ function calculateScore(){
     else if(k.indexOf('Viackrát') !== -1 || k.indexOf('Viackrat') !== -1) score -= 10;
   }
   
-  // Minimum 20, maximum 100
   if(score < 20) score = 20;
   if(score > 100) score = 100;
   return score;
 }
 
-// Zachytenie odpovedi pre score - rozpoznava ktoru otazku posledna Azuni polozila
 function captureScoreAnswer(lastAzuniMsg, userAnswer){
   if(!lastAzuniMsg || !userAnswer) return;
   var msg = lastAzuniMsg;
@@ -384,10 +550,8 @@ function getHardcodedReply(userMsg) {
     FLOW_STEP = 3;
     var normalized = norm(userMsg);
     
-    // Detekcia negativnych signalov
     var negativny = /\b(hrozn|zly|zle|na\s*hovno|nahovno|napicu|nachuj|nachuja|do\s*pic|do\s*riti|do\s*hajzla|do\s*kelu|stoji|stojim|stojite|stracam|nervy|unaven|vycerpan|narocn|tazk|pod\s*psa|peklo|bordel|chaos|stresuj|preceneny|hnev|nahne?van|smutn|kokot|kokoti|nasrat|nasran|kurva|usran|piju|piju\s*krv|maso\s*krvave|krvave|otravn|otravuj|zbabran|katastr|tragedi|pohrom|dno|vstavajem|nemam\s*na\s*to|nezvladam)/.test(normalized);
     
-    // Detekcia spatnej otazky "a ty? / ako sa mas?"
     var vraclQ = /\ba\s*ty\b|\bco\s*ty\b|\bako\s*sa\s*mas\b|\bako\s*sa\s*mate\b|\bvy\s*\?|\bco\s*u\s*vas\b|\bako\s*je\s*to\s*u\s*vas\b/.test(normalized);
     
     if (negativny) {
@@ -404,11 +568,9 @@ function getHardcodedReply(userMsg) {
   if (FLOW_STEP === 3) {
     var normalized = norm(userMsg);
     
-    // Detekcia ci sa lekar pyta "preco?" namiesto odpovede na zameranie
     var precoQ = /\bpreco\b|\bco\s*ti\s*to\b|\bna\s*co\s*ti\b|\bnacho\b|\bna\s*coho\b|\bzac?co\b|\bz\s*akeho\s*dovodu\b|\bprosim\?/.test(normalized);
     
     if (precoQ) {
-      // Nepostupuj v flow - len odpovedaj a zopakuj otazku
       return 'Pýtam sa preto, aby som Vám vedela pripraviť personalizovanú analýzu — riešenia pre pediatra a chirurga vyzerajú úplne inak 😊 Tak aké je zameranie Vašej ambulancie?';
     }
     
@@ -627,6 +789,11 @@ async function startChat(){
     document.getElementById('chatWrap').classList.add('active');
     document.getElementById('sendBtn').disabled = true;
 
+    // Meta Pixel - StartChat event (ak je consent)
+    if(typeof fbq !== 'undefined'){
+      try { fbq('trackCustom', 'StartChat'); } catch(e){}
+    }
+
     var uvod = 'Dobrý deň 👋 Volám sa Azuni, som AI asistentka portálu ZdraviePro. Pomôžem Vám zistiť skutočnú efektivitu Vašej ambulancie. S kým mám tú česť — ste lekár, lekárka alebo zdravotná sestra?';
     chatHistory.push({role:'user', content:'Zacni rozhovor.'});
     chatHistory.push({role:'assistant', content:uvod});
@@ -644,21 +811,10 @@ async function startChat(){
   }
 }
 
-// HARDCODED ZAVERECNY FLOW - po zadani emailu
-// AFTER_EMAIL_STEP:
-// 0 = este neprisiel email
-// 1 = po emaili zobrazime skore + stats + otazku "Zaujimalo by Vas..."
-// 2 = po "Ano" pytame telefon
-// 3 = po telefone pytame preferovany cas
-// 4 = po case zaverecna sprava + poslanie emailov
-
 async function handleAfterEmailStep(text){
-  // Krok 1: uzivatel prave zadal email - potvrd, ukaz skore, pytaj CTA otazku
   if(AFTER_EMAIL_STEP === 1){
-    // text je odpoved na otazku "Zaujimalo by Vas..."
     var ano = norm(text).indexOf('ano') !== -1 || norm(text).indexOf('zaujima') !== -1;
     if(!ano){
-      // Nie - skus ho jemne vratit, opytaj sa ci ma otazku
       addTyping();
       await new Promise(function(r){ setTimeout(r, 700); });
       removeTyping();
@@ -666,14 +822,13 @@ async function handleAfterEmailStep(text){
       var soft = 'Rozumiem, ' + oslov + ' 💛 Vôbec nič sa nedeje. Možno Vás však ešte niečo zaujíma o systéme ZdraviePro — máte nejakú otázku?';
       addMsg('assistant', soft);
       chatHistory.push({role:'assistant', content:soft});
-      AFTER_EMAIL_STEP = 1.5; // medzikrok - druha sanca
+      AFTER_EMAIL_STEP = 1.5;
       document.getElementById('quickOpts').innerHTML = '';
       setInputMode(false);
       var inp2 = document.getElementById('userInput');
       if(inp2) inp2.placeholder = 'Napíšte otázku alebo "nemám"...';
       return;
     }
-    // Ano - pytame telefon
     addTyping();
     await new Promise(function(r){ setTimeout(r, 600); });
     removeTyping();
@@ -688,15 +843,12 @@ async function handleAfterEmailStep(text){
     return;
   }
   
-  // Krok 1.5: druha sanca - po "Nie" sa opytala ci ma otazku
   if(AFTER_EMAIL_STEP === 1.5){
     var nText = norm(text.trim());
     
-    // Detekcia ze nema otazku (kratke negativne odpovede)
     var nemaOtazku = /^(nie|nemam|ziadne|ziadnu|asi nie|asi ziadnu|nic|nicto|netreba|dakujem|netreba dakujem|asi nemam|nemam ziadnu|nemam otazku)/.test(nText) || nText.length < 4;
     
     if(nemaOtazku){
-      // Nema otazku - zaver bez hovoru, info pojde mailom
       addTyping();
       await new Promise(function(r){ setTimeout(r, 700); });
       removeTyping();
@@ -707,13 +859,16 @@ async function handleAfterEmailStep(text){
       LEAD_DATA.preferovanyCas = 'Záujem odmietol';
       LEAD_DATA.telefon = '';
       await sendEmails();
+      // Meta Pixel - Lead event (bez telefonu)
+      if(typeof fbq !== 'undefined'){
+        try { fbq('track', 'Lead', {content_name: 'Azuni Diagnostika - Email only'}); } catch(e){}
+      }
       document.getElementById('quickOpts').innerHTML = '';
       document.getElementById('inputRow').style.display = 'none';
       AFTER_EMAIL_STEP = 99;
       return;
     }
     
-    // Ma otazku - ulozime ju a navrhneme hovor s kolegom
     LEAD_DATA.otazka = text.trim();
     addTyping();
     await new Promise(function(r){ setTimeout(r, 800); });
@@ -730,7 +885,6 @@ async function handleAfterEmailStep(text){
     return;
   }
   
-  // Krok 2: uzivatel zadal telefon
   if(AFTER_EMAIL_STEP === 2){
     LEAD_DATA.telefon = text.trim();
     addTyping();
@@ -747,7 +901,6 @@ async function handleAfterEmailStep(text){
     return;
   }
   
-  // Krok 3: uzivatel vybral preferovany cas
   if(AFTER_EMAIL_STEP === 3){
     LEAD_DATA.preferovanyCas = text.trim();
     addTyping();
@@ -758,8 +911,12 @@ async function handleAfterEmailStep(text){
     addMsg('assistant', zaver);
     chatHistory.push({role:'assistant', content:zaver});
     
-    // Poslat emaily
     await sendEmails();
+    
+    // Meta Pixel - kvalifikovany Lead (s telefonom)
+    if(typeof fbq !== 'undefined'){
+      try { fbq('track', 'Lead', {content_name: 'Azuni Diagnostika - Qualified Lead'}); } catch(e){}
+    }
     
     document.getElementById('quickOpts').innerHTML = '';
     document.getElementById('inputRow').style.display = 'none';
@@ -781,7 +938,6 @@ async function sendMsg(override){
     addMsg('user', text);
     chatHistory.push({role:'user', content:text});
     
-    // Zachytenie odpovedi pre vypocet skore (najdi poslednu Azuni spravu)
     var lastAzuniMsg = '';
     for(var i = chatHistory.length - 2; i >= 0; i--){
       if(chatHistory[i].role === 'assistant'){
@@ -791,14 +947,12 @@ async function sendMsg(override){
     }
     captureScoreAnswer(lastAzuniMsg, text);
     
-    // Ak sme uz v hardcoded zaverecnom flow
     if(AFTER_EMAIL_STEP > 0 && AFTER_EMAIL_STEP < 99){
       await handleAfterEmailStep(text);
       document.getElementById('sendBtn').disabled = false;
       return;
     }
     
-    // Ak sme skoncili (AFTER_EMAIL_STEP === 99), ignorujeme
     if(AFTER_EMAIL_STEP === 99){
       document.getElementById('sendBtn').disabled = false;
       return;
@@ -813,9 +967,7 @@ async function sendMsg(override){
       removeTyping();
       reply = hardcoded;
     } else {
-      // Kontrola ci uzivatel prave zadal email
       if(isValidEmail(text)){
-        // Uzivatel zadal email - prepni na hardcoded zaverecny flow
         LEAD_DATA.email = text.trim();
         LEAD_DATA.skore = calculateScore();
         
@@ -828,7 +980,11 @@ async function sendMsg(override){
         addMsg('assistant', potvrdenie);
         chatHistory.push({role:'assistant', content:potvrdenie});
         
-        // Po kratkom case otazka CTA
+        // Meta Pixel - email zachyteny (top-of-funnel lead signal)
+        if(typeof fbq !== 'undefined'){
+          try { fbq('track', 'CompleteRegistration', {content_name: 'Azuni - Email captured'}); } catch(e){}
+        }
+        
         await new Promise(function(r){ setTimeout(r, 1200); });
         addTyping();
         await new Promise(function(r){ setTimeout(r, 700); });
